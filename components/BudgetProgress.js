@@ -1,4 +1,7 @@
-import { fmt, buildBudgetProgress } from '@/lib/finance';
+import { fmt, buildBudgetProgress, FALLBACK_CATEGORY_COLOR } from '@/lib/finance';
+
+const TIER_FILL = { over: 'var(--rust)', near: 'var(--mustard)' };
+const TIER_LABEL_CLASS = { over: 'over', near: 'near' };
 
 export default function BudgetProgress({ catEntries, budgets, nMonths, catColors }) {
   const rows = buildBudgetProgress(catEntries, budgets, nMonths);
@@ -15,14 +18,14 @@ export default function BudgetProgress({ catEntries, budgets, nMonths, catColors
           <div className="budget-row" key={r.cat}>
             <div className="budget-row-head">
               <span>{r.cat}</span>
-              <span className={r.exceeded ? 'over' : ''}>
+              <span className={TIER_LABEL_CLASS[r.tier] || ''}>
                 {fmt(r.monthly)} / {fmt(r.goal)}
               </span>
             </div>
             <div className="budget-track">
               <div
                 className="budget-fill"
-                style={{ width: r.pct + '%', background: r.exceeded ? 'var(--rust)' : (catColors[r.cat] || '#B4B2A9') }}
+                style={{ width: r.pct + '%', background: TIER_FILL[r.tier] || catColors[r.cat] || FALLBACK_CATEGORY_COLOR }}
               />
             </div>
           </div>

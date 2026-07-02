@@ -33,6 +33,13 @@ export default function ParecerDoc({ a, diagnostics, recsHtml, aiGenerated, char
         <div className="txt">
           <div className="lbl">{health.label}</div>
           <div className="desc">{health.desc}</div>
+          {health.topics.length > 0 && (
+            <div className="health-topics">
+              {health.topics.map((t) => (
+                <span className="health-chip" key={t}>{t}</span>
+              ))}
+            </div>
+          )}
         </div>
       </div>
 

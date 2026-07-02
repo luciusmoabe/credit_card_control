@@ -18,7 +18,7 @@ export default function KpiGrid({ analysis }) {
         </div>
         <div className="kpi">
           <div className="lbl">Assinaturas / mês</div>
-          <div className="val">{fmt(analysis.subsTotal)}</div>
+          <div className="val">{fmt(analysis.subsTotal / analysis.nMonths)}</div>
         </div>
         <div className="kpi warn">
           <div className="lbl">Compromisso futuro (parcelas)</div>

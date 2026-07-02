@@ -9,7 +9,7 @@ import { buildDiagnostics, buildBudgetDiagnostics, buildFallbackRecommendations,
 // Renders its own (visually hidden) donut chart instead of reusing the one on
 // the Visão Geral section — that panel may not be mounted when the parecer
 // is generated, since sections unmount when you navigate away from them.
-export default function ParecerPanel({ analysis, budgets, catColors }) {
+export default function ParecerPanel({ analysis, budgets, catColors, categories }) {
   const [doc, setDoc] = useState(null);
   const [status, setStatus] = useState('');
   const [generating, setGenerating] = useState(false);
@@ -25,7 +25,7 @@ export default function ParecerPanel({ analysis, budgets, catColors }) {
     const diagnostics = buildDiagnostics(analysis).concat(
       buildBudgetDiagnostics(analysis.catEntries, budgets, analysis.nMonths),
     );
-    const fallbackHtml = buildRecommendationsHtml(buildFallbackRecommendations(analysis));
+    const fallbackHtml = buildRecommendationsHtml(buildFallbackRecommendations(analysis, categories));
     let chartImage = null;
     try {
       chartImage = snapshotChartRef.current?.toBase64Image() || null;

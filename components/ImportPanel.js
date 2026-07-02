@@ -21,7 +21,6 @@ export default function ImportPanel({
   onParse,
   onConfirm,
   onCancel,
-  onClearAll,
 }) {
   const [bankPreset, setBankPreset] = useState('');
   const [readingPdf, setReadingPdf] = useState(false);
@@ -119,7 +118,6 @@ export default function ImportPanel({
           onChange={handlePdfFile}
         />
         <button onClick={onParse}>Analisar lançamentos</button>
-        <button className="ghost" onClick={onClearAll}>Limpar tudo</button>
       </div>
       <textarea
         placeholder="Cole aqui os lançamentos da fatura..."

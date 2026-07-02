@@ -13,6 +13,7 @@ import InstallmentsTable from '@/components/InstallmentsTable';
 import ProjectionPanel from '@/components/ProjectionPanel';
 import ParecerPanel from '@/components/ParecerPanel';
 import CategoryManager from '@/components/CategoryManager';
+import DangerZone from '@/components/DangerZone';
 import BudgetProgress from '@/components/BudgetProgress';
 import {
   getTransactions,
@@ -222,7 +223,6 @@ export default function Home() {
   }
 
   async function handleClearAll() {
-    if (!window.confirm('Isso vai apagar todos os lançamentos salvos. Continuar?')) return;
     const prevTxns = txns;
     setTxns([]);
     try {
@@ -312,23 +312,25 @@ export default function Home() {
           onParse={handleParse}
           onConfirm={handleConfirmStaging}
           onCancel={handleCancelStaging}
-          onClearAll={handleClearAll}
         />
       );
     }
 
     if (activeSection === 'categories') {
       return (
-        <CategoryManager
-          categories={categories}
-          budgets={budgets}
-          onCreate={handleCreateCategory}
-          onRename={handleRenameCategory}
-          onRecolor={handleRecolorCategory}
-          onDelete={handleDeleteCategory}
-          onSetBudget={handleSetBudget}
-          onClearBudget={handleClearBudget}
-        />
+        <>
+          <CategoryManager
+            categories={categories}
+            budgets={budgets}
+            onCreate={handleCreateCategory}
+            onRename={handleRenameCategory}
+            onRecolor={handleRecolorCategory}
+            onDelete={handleDeleteCategory}
+            onSetBudget={handleSetBudget}
+            onClearBudget={handleClearBudget}
+          />
+          <DangerZone txnCount={txns.length} onClearAll={handleClearAll} />
+        </>
       );
     }
 
@@ -369,14 +371,14 @@ export default function Home() {
     if (activeSection === 'commitments') {
       return (
         <>
-          <InstallmentsTable parcRows={analysis.parcRows} />
           <ProjectionPanel parcRows={projection.parcRows} anchorPeriod={projection.anchorPeriod} />
+          <InstallmentsTable parcRows={projection.parcRows} anchorPeriod={projection.anchorPeriod} />
         </>
       );
     }
 
     if (activeSection === 'parecer') {
-      return <ParecerPanel analysis={analysis} budgets={budgets} catColors={catColors} />;
+      return <ParecerPanel analysis={analysis} budgets={budgets} catColors={catColors} categories={categories} />;
     }
 
     // overview

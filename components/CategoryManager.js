@@ -1,11 +1,64 @@
 'use client';
 
-import { useState } from 'react';
-import { sortCategoriesAlpha } from '@/lib/finance';
+import { useEffect, useRef, useState } from 'react';
+import { sortCategoriesAlpha, CATEGORY_PALETTE, normalizeValue } from '@/lib/finance';
+
+function ColorSwatchPicker({ value, disabled, onChange }) {
+  const [open, setOpen] = useState(false);
+  const ref = useRef(null);
+
+  useEffect(() => {
+    if (!open) return;
+    function handleClickOutside(e) {
+      if (ref.current && !ref.current.contains(e.target)) setOpen(false);
+    }
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [open]);
+
+  if (disabled) {
+    return <span className="color-swatch-fixed" style={{ background: value }} />;
+  }
+
+  return (
+    <div className="color-picker" ref={ref}>
+      <button
+        type="button"
+        className="color-swatch-btn"
+        style={{ background: value }}
+        onClick={() => setOpen((o) => !o)}
+        title="Trocar cor"
+      />
+      {open && (
+        <div className="color-picker-pop">
+          {CATEGORY_PALETTE.map((c) => (
+            <button
+              key={c}
+              type="button"
+              className={`color-swatch-opt ${c.toLowerCase() === value.toLowerCase() ? 'selected' : ''}`}
+              style={{ background: c }}
+              onClick={() => { onChange(c); setOpen(false); }}
+              title={c}
+            />
+          ))}
+          <label className="color-swatch-custom" title="Outra cor">
+            <input type="color" value={value} onChange={(e) => { onChange(e.target.value); setOpen(false); }} />
+          </label>
+        </div>
+      )}
+    </div>
+  );
+}
+
+function formatBudgetValue(v) {
+  if (v === undefined || v === null || v === '') return '';
+  const n = Number(v);
+  return isNaN(n) ? '' : n.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+}
 
 export default function CategoryManager({ categories, budgets, onCreate, onRename, onRecolor, onDelete, onSetBudget, onClearBudget }) {
   const [newName, setNewName] = useState('');
-  const [newColor, setNewColor] = useState('#7F77DD');
+  const [newColor, setNewColor] = useState(CATEGORY_PALETTE[0]);
   const sortedCategories = sortCategoriesAlpha(categories);
 
   const budgetMap = {};
@@ -26,8 +79,8 @@ export default function CategoryManager({ categories, budgets, onCreate, onRenam
       if (budgetMap[catName] !== undefined) onClearBudget(catName);
       return;
     }
-    const v = parseFloat(trimmed.replace(',', '.'));
-    if (!isNaN(v) && v > 0) onSetBudget(catName, v);
+    const v = normalizeValue(trimmed);
+    if (v !== null && v > 0) onSetBudget(catName, v);
   }
 
   return (
@@ -44,11 +97,10 @@ export default function CategoryManager({ categories, budgets, onCreate, onRenam
             {sortedCategories.map((c) => (
               <tr key={c.name}>
                 <td>
-                  <input
-                    type="color"
+                  <ColorSwatchPicker
                     value={c.color}
                     disabled={c.is_system}
-                    onChange={(e) => onRecolor(c.name, e.target.value)}
+                    onChange={(color) => onRecolor(c.name, color)}
                   />
                 </td>
                 <td>
@@ -70,7 +122,7 @@ export default function CategoryManager({ categories, budgets, onCreate, onRenam
                   <input
                     className="staging-row-edit value"
                     placeholder="Sem meta"
-                    defaultValue={budgetMap[c.name] ?? ''}
+                    defaultValue={formatBudgetValue(budgetMap[c.name])}
                     onBlur={(e) => commitBudget(c.name, e.target.value)}
                   />
                 </td>
@@ -87,7 +139,7 @@ export default function CategoryManager({ categories, budgets, onCreate, onRenam
         </table>
       </div>
       <div className="row" style={{ marginTop: 12 }}>
-        <input type="color" value={newColor} onChange={(e) => setNewColor(e.target.value)} />
+        <ColorSwatchPicker value={newColor} onChange={setNewColor} />
         <input
           type="text"
           placeholder="Nova categoria"

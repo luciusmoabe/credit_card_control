@@ -2,7 +2,7 @@
 
 import 'chart.js/auto';
 import { Bar } from 'react-chartjs-2';
-import { fmt, buildProjection, addMonths } from '@/lib/finance';
+import { fmt, buildProjection } from '@/lib/finance';
 
 export default function ProjectionPanel({ parcRows, anchorPeriod }) {
   if (!parcRows.length) {
@@ -16,14 +16,6 @@ export default function ProjectionPanel({ parcRows, anchorPeriod }) {
           <div className="kpi"><div className="lbl">Próximos 3 meses</div><div className="val">{fmt(0)}</div></div>
           <div className="kpi"><div className="lbl">Próximos 6 meses</div><div className="val">{fmt(0)}</div></div>
           <div className="kpi good"><div className="lbl">Fica livre de parcelas em</div><div className="val" style={{ fontSize: 16 }}>{anchorPeriod || '—'}</div></div>
-        </div>
-        <div className="scroll-x" style={{ marginTop: 16 }}>
-          <table>
-            <thead><tr><th>Descrição</th><th>Valor/mês</th><th>Restam</th><th>Termina em</th></tr></thead>
-            <tbody>
-              <tr><td colSpan={4} className="hint" style={{ padding: '14px 8px' }}>Nenhum parcelamento ativo.</td></tr>
-            </tbody>
-          </table>
         </div>
       </div>
     );
@@ -52,7 +44,6 @@ export default function ProjectionPanel({ parcRows, anchorPeriod }) {
   };
 
   const endingSoon = parcRows.filter((r) => r.remaining > 0 && r.remaining <= 2);
-  const sorted = [...parcRows].sort((a, b) => a.remaining - b.remaining);
 
   return (
     <div className="panel">
@@ -76,24 +67,6 @@ export default function ProjectionPanel({ parcRows, anchorPeriod }) {
           </div>
         </div>
       )}
-      <div className="scroll-x" style={{ marginTop: 16 }}>
-        <table>
-          <thead><tr><th>Descrição</th><th>Valor/mês</th><th>Restam</th><th>Termina em</th></tr></thead>
-          <tbody>
-            {sorted.map((r) => {
-              const endMonth = r.remaining > 0 ? addMonths(r.anchorPeriod, r.remaining) : r.anchorPeriod;
-              return (
-                <tr key={r.desc}>
-                  <td>{r.desc}</td>
-                  <td className="mono">{fmt(r.valuePerMonth)}</td>
-                  <td className="mono">{r.remaining}</td>
-                  <td className="mono">{endMonth}</td>
-                </tr>
-              );
-            })}
-          </tbody>
-        </table>
-      </div>
     </div>
   );
 }
