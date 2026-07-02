@@ -1,33 +1,11 @@
 import { fmt } from '@/lib/finance';
 
-export default function KpiGrid({
-  analysis,
-  periods,
-  banks,
-  filterPeriod,
-  onFilterPeriodChange,
-  filterBank,
-  onFilterBankChange,
-}) {
+export default function KpiGrid({ analysis }) {
   const topCat = analysis.catEntries[0];
 
   return (
     <div className="panel">
       <h2>Visão geral</h2>
-      <div className="filters">
-        <select value={filterPeriod} onChange={(e) => onFilterPeriodChange(e.target.value)}>
-          <option value="__all__">Todos os períodos</option>
-          {periods.map((p) => (
-            <option key={p} value={p}>{p}</option>
-          ))}
-        </select>
-        <select value={filterBank} onChange={(e) => onFilterBankChange(e.target.value)}>
-          <option value="__all__">Todos os bancos</option>
-          {banks.map((b) => (
-            <option key={b} value={b}>{b}</option>
-          ))}
-        </select>
-      </div>
       <div className="kpi-grid">
         <div className="kpi">
           <div className="lbl">Total gasto (compras)</div>

@@ -1,10 +1,12 @@
 'use client';
 
 import { useState } from 'react';
+import { sortCategoriesAlpha } from '@/lib/finance';
 
 export default function CategoryManager({ categories, budgets, onCreate, onRename, onRecolor, onDelete, onSetBudget, onClearBudget }) {
   const [newName, setNewName] = useState('');
   const [newColor, setNewColor] = useState('#7F77DD');
+  const sortedCategories = sortCategoriesAlpha(categories);
 
   const budgetMap = {};
   budgets.forEach((b) => {
@@ -39,7 +41,7 @@ export default function CategoryManager({ categories, budgets, onCreate, onRenam
             <tr><th>Cor</th><th>Categoria</th><th>Meta mensal</th><th></th></tr>
           </thead>
           <tbody>
-            {categories.map((c) => (
+            {sortedCategories.map((c) => (
               <tr key={c.name}>
                 <td>
                   <input

@@ -4,7 +4,7 @@ import 'chart.js/auto';
 import { Doughnut } from 'react-chartjs-2';
 import { FALLBACK_CATEGORY_COLOR, fmt } from '@/lib/finance';
 
-export default function CategoryChart({ catEntries, chartRef, catColors }) {
+export default function CategoryChart({ catEntries, catColors }) {
   const labels = catEntries.map((e) => e.cat);
   const values = catEntries.map((e) => e.val);
   const colors = labels.map((l) => catColors[l] || FALLBACK_CATEGORY_COLOR);
@@ -32,7 +32,7 @@ export default function CategoryChart({ catEntries, chartRef, catColors }) {
       ) : (
         <>
           <div style={{ position: 'relative', height: 230 }}>
-            <Doughnut ref={chartRef} data={data} options={options} />
+            <Doughnut data={data} options={options} />
           </div>
           <div className="legend">
             {catEntries.map((e) => (

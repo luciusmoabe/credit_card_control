@@ -1,7 +1,8 @@
 'use client';
 
-import { useEffect, useMemo, useRef, useState } from 'react';
-import Ticket from '@/components/Ticket';
+import { useEffect, useMemo, useState } from 'react';
+import Sidebar from '@/components/Sidebar';
+import TopBar from '@/components/TopBar';
 import KpiGrid from '@/components/KpiGrid';
 import ImportPanel from '@/components/ImportPanel';
 import TransactionsTable from '@/components/TransactionsTable';
@@ -48,6 +49,8 @@ function defaultPeriod() {
 }
 
 export default function Home() {
+  const [activeSection, setActiveSection] = useState('overview');
+
   const [txns, setTxns] = useState([]);
   const [overrides, setOverrides] = useState({});
   const [categories, setCategories] = useState(DEFAULT_CATEGORIES);
@@ -286,37 +289,36 @@ export default function Home() {
   }
 
   const hasData = txns.length > 0;
-  const catChartRef = useRef(null);
   const catColors = useMemo(() => catColorMap(categories), [categories]);
 
-  return (
-    <div className="wrap">
-      <Ticket title={ticketTitle} total={analysis.totalSpend} hasData={hasData} />
+  function renderSection() {
+    if (loading) return <div className="panel hint">Carregando...</div>;
 
-      <ImportPanel
-        periodLabel={periodLabel}
-        onPeriodLabelChange={setPeriodLabel}
-        bankLabel={bankLabel}
-        onBankLabelChange={setBankLabel}
-        importText={importText}
-        onImportTextChange={setImportText}
-        staging={staging}
-        onStagingChange={setStaging}
-        overrides={overrides}
-        categories={categories}
-        parseFeedback={parseFeedback}
-        onParseFeedbackChange={setParseFeedback}
-        onParse={handleParse}
-        onConfirm={handleConfirmStaging}
-        onCancel={handleCancelStaging}
-        onClearAll={handleClearAll}
-      />
+    if (activeSection === 'import') {
+      return (
+        <ImportPanel
+          periodLabel={periodLabel}
+          onPeriodLabelChange={setPeriodLabel}
+          bankLabel={bankLabel}
+          onBankLabelChange={setBankLabel}
+          importText={importText}
+          onImportTextChange={setImportText}
+          staging={staging}
+          onStagingChange={setStaging}
+          overrides={overrides}
+          categories={categories}
+          parseFeedback={parseFeedback}
+          onParseFeedbackChange={setParseFeedback}
+          onParse={handleParse}
+          onConfirm={handleConfirmStaging}
+          onCancel={handleCancelStaging}
+          onClearAll={handleClearAll}
+        />
+      );
+    }
 
-      {error && <div className="panel hint">{error}</div>}
-
-      {loading && <div className="panel hint">Carregando...</div>}
-
-      {!loading && (
+    if (activeSection === 'categories') {
+      return (
         <CategoryManager
           categories={categories}
           budgets={budgets}
@@ -327,48 +329,86 @@ export default function Home() {
           onSetBudget={handleSetBudget}
           onClearBudget={handleClearBudget}
         />
-      )}
+      );
+    }
 
-      {!loading && !hasData && (
+    if (!hasData) {
+      return (
         <div className="panel empty">
           <div className="big">Nenhum lançamento ainda</div>
-          <div>Importe sua primeira fatura acima para ver o painel.</div>
-        </div>
-      )}
-
-      {!loading && hasData && (
-        <div id="dashboard">
-          <KpiGrid
-            analysis={analysis}
-            periods={periods}
-            banks={banks}
-            filterPeriod={effectiveFilterPeriod}
-            onFilterPeriodChange={setFilterPeriod}
-            filterBank={effectiveFilterBank}
-            onFilterBankChange={setFilterBank}
-          />
-          <BudgetProgress catEntries={analysis.catEntries} budgets={budgets} nMonths={analysis.nMonths} catColors={catColors} />
-          <div className="charts">
-            <CategoryChart catEntries={analysis.catEntries} chartRef={catChartRef} catColors={catColors} />
-            <TrendChart perPeriod={analysis.perPeriod} />
+          <div>
+            Vá em <strong>&quot;Importar&quot;</strong> no menu ao lado para trazer sua primeira fatura.
           </div>
+        </div>
+      );
+    }
+
+    if (activeSection === 'transactions') {
+      return (
+        <TransactionsTable
+          scoped={analysis.scoped}
+          categories={categories}
+          banks={banks}
+          filterCat={filterCat}
+          onFilterCatChange={setFilterCat}
+          filterBank={effectiveFilterBank}
+          onFilterBankChange={setFilterBank}
+          filterSearch={filterSearch}
+          onFilterSearchChange={setFilterSearch}
+          onCategoryChange={handleCategoryChange}
+          onFieldChange={handleTransactionFieldChange}
+          onDelete={handleDeleteTransaction}
+        />
+      );
+    }
+
+    if (activeSection === 'commitments') {
+      return (
+        <>
           <SubscriptionsList subs={analysis.subs} />
           <InstallmentsTable parcRows={analysis.parcRows} />
           <ProjectionPanel parcRows={projection.parcRows} anchorPeriod={projection.anchorPeriod} />
-          <ParecerPanel analysis={analysis} chartRef={catChartRef} budgets={budgets} catColors={catColors} />
-          <TransactionsTable
-            scoped={analysis.scoped}
-            categories={categories}
-            filterCat={filterCat}
-            onFilterCatChange={setFilterCat}
-            filterSearch={filterSearch}
-            onFilterSearchChange={setFilterSearch}
-            onCategoryChange={handleCategoryChange}
-            onFieldChange={handleTransactionFieldChange}
-            onDelete={handleDeleteTransaction}
-          />
+        </>
+      );
+    }
+
+    if (activeSection === 'parecer') {
+      return <ParecerPanel analysis={analysis} budgets={budgets} catColors={catColors} />;
+    }
+
+    // overview
+    return (
+      <>
+        <KpiGrid analysis={analysis} />
+        <BudgetProgress catEntries={analysis.catEntries} budgets={budgets} nMonths={analysis.nMonths} catColors={catColors} />
+        <div className="charts">
+          <CategoryChart catEntries={analysis.catEntries} catColors={catColors} />
+          <TrendChart perPeriod={analysis.perPeriod} />
         </div>
-      )}
+      </>
+    );
+  }
+
+  return (
+    <div className="app-shell">
+      <Sidebar active={activeSection} onSelect={setActiveSection} />
+      <div className="app-content">
+        <TopBar
+          title={ticketTitle}
+          total={analysis.totalSpend}
+          hasData={hasData}
+          periods={periods}
+          banks={banks}
+          filterPeriod={effectiveFilterPeriod}
+          onFilterPeriodChange={setFilterPeriod}
+          filterBank={effectiveFilterBank}
+          onFilterBankChange={setFilterBank}
+        />
+        <main id="section-content">
+          {error && <div className="panel hint">{error}</div>}
+          {renderSection()}
+        </main>
+      </div>
     </div>
   );
 }

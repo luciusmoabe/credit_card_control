@@ -1,10 +1,13 @@
-import { fmt } from '@/lib/finance';
+import { fmt, sortCategoriesAlpha } from '@/lib/finance';
 
 export default function TransactionsTable({
   scoped,
   categories,
+  banks,
   filterCat,
   onFilterCatChange,
+  filterBank,
+  onFilterBankChange,
   filterSearch,
   onFilterSearchChange,
   onCategoryChange,
@@ -12,6 +15,7 @@ export default function TransactionsTable({
   onDelete,
 }) {
   const search = filterSearch.trim().toUpperCase();
+  const sortedCategories = sortCategoriesAlpha(categories);
   let rows = [...scoped].sort((a, b) => ((a.period + a.date) < (b.period + b.date) ? 1 : -1));
   if (filterCat !== '__all__') rows = rows.filter((t) => t.category === filterCat);
   if (search) rows = rows.filter((t) => t.description.toUpperCase().includes(search));
@@ -37,8 +41,14 @@ export default function TransactionsTable({
       <div className="filters">
         <select value={filterCat} onChange={(e) => onFilterCatChange(e.target.value)}>
           <option value="__all__">Todas as categorias</option>
-          {categories.map((c) => (
+          {sortedCategories.map((c) => (
             <option key={c.name} value={c.name}>{c.name}</option>
+          ))}
+        </select>
+        <select value={filterBank} onChange={(e) => onFilterBankChange(e.target.value)}>
+          <option value="__all__">Todos os bancos</option>
+          {banks.map((b) => (
+            <option key={b} value={b}>{b}</option>
           ))}
         </select>
         <input
@@ -88,7 +98,7 @@ export default function TransactionsTable({
                     value={t.category}
                     onChange={(e) => onCategoryChange(t, e.target.value)}
                   >
-                    {categories.map((c) => (
+                    {sortedCategories.map((c) => (
                       <option key={c.name} value={c.name}>{c.name}</option>
                     ))}
                   </select>
