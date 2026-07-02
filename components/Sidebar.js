@@ -21,6 +21,14 @@ const ICONS = {
       <path d="M4 19h16" />
     </svg>
   ),
+  subscriptions: (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M20 11a8 8 0 0 0-14.9-4" />
+      <path d="M4 3v4.5h4.5" />
+      <path d="M4 13a8 8 0 0 0 14.9 4" />
+      <path d="M20 21v-4.5h-4.5" />
+    </svg>
+  ),
   commitments: (
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
       <rect x="3" y="4.5" width="18" height="16" rx="1.5" />
@@ -50,6 +58,7 @@ export const SECTIONS = [
   { id: 'overview', label: 'Visão Geral' },
   { id: 'transactions', label: 'Lançamentos' },
   { id: 'import', label: 'Importar' },
+  { id: 'subscriptions', label: 'Assinaturas' },
   { id: 'commitments', label: 'Parcelamentos' },
   { id: 'categories', label: 'Categorias & Metas' },
   { id: 'parecer', label: 'Parecer' },

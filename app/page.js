@@ -362,10 +362,13 @@ export default function Home() {
       );
     }
 
+    if (activeSection === 'subscriptions') {
+      return <SubscriptionsList subs={analysis.subs} />;
+    }
+
     if (activeSection === 'commitments') {
       return (
         <>
-          <SubscriptionsList subs={analysis.subs} />
           <InstallmentsTable parcRows={analysis.parcRows} />
           <ProjectionPanel parcRows={projection.parcRows} anchorPeriod={projection.anchorPeriod} />
         </>
