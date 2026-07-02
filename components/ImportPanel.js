@@ -15,6 +15,7 @@ export default function ImportPanel({
   staging,
   onStagingChange,
   overrides,
+  categories,
   parseFeedback,
   onParseFeedbackChange,
   onParse,
@@ -69,7 +70,7 @@ export default function ImportPanel({
         return { ...row, value: isNaN(v) ? row.value : v };
       }
       if (field === 'description') {
-        return { ...row, description: value, category: categorize(value, overrides) };
+        return { ...row, description: value, category: categorize(value, overrides, categories) };
       }
       return { ...row, [field]: value };
     });

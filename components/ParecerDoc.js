@@ -1,6 +1,6 @@
-import { fmt, fmtPct, CAT_COLORS, buildHealthBadge } from '@/lib/finance';
+import { fmt, fmtPct, FALLBACK_CATEGORY_COLOR, buildHealthBadge } from '@/lib/finance';
 
-export default function ParecerDoc({ a, diagnostics, recsHtml, aiGenerated, chartImage }) {
+export default function ParecerDoc({ a, diagnostics, recsHtml, aiGenerated, chartImage, catColors }) {
   const now = new Date();
   const dataEmissao = now.toLocaleDateString('pt-BR') + ' às ' + now.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
   const escopo =
@@ -53,7 +53,7 @@ export default function ParecerDoc({ a, diagnostics, recsHtml, aiGenerated, char
           <div className="chart-legend">
             {a.catEntries.map((c) => (
               <span key={c.cat}>
-                <span className="sw" style={{ background: CAT_COLORS[c.cat] || '#B4B2A9' }} />
+                <span className="sw" style={{ background: catColors[c.cat] || FALLBACK_CATEGORY_COLOR }} />
                 {c.cat} {fmtPct(c.pct)}
               </span>
             ))}
@@ -63,7 +63,7 @@ export default function ParecerDoc({ a, diagnostics, recsHtml, aiGenerated, char
           <thead><tr><th>Categoria</th><th style={{ textAlign: 'right' }}>Valor</th><th style={{ textAlign: 'right' }}>% do total</th></tr></thead>
           <tbody>
             {a.catEntries.map((c) => {
-              const color = CAT_COLORS[c.cat] || '#B4B2A9';
+              const color = catColors[c.cat] || FALLBACK_CATEGORY_COLOR;
               const barPct = Math.max(4, Math.round((c.val / maxCat) * 100));
               return (
                 <tr key={c.cat}>
@@ -103,7 +103,7 @@ export default function ParecerDoc({ a, diagnostics, recsHtml, aiGenerated, char
             {a.subs.map((s) => (
               <li key={s.id}>
                 <span className="cat-name">
-                  <span className="cat-swatch" style={{ background: CAT_COLORS['Assinaturas'] }} />
+                  <span className="cat-swatch" style={{ background: catColors['Assinaturas'] || FALLBACK_CATEGORY_COLOR }} />
                   {s.description}
                 </span>{' '}
                 — <span className="mono">{fmt(s.value)}</span>

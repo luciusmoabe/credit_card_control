@@ -178,6 +178,12 @@ tr:last-child td { border-bottom: none; }
 .sub-item .meta { font-size: 11.5px; color: var(--ink-soft); }
 .sub-item .amt { font-family: var(--font-mono), monospace; font-weight: 500; }
 
+.budget-list { display: flex; flex-direction: column; gap: 14px; }
+.budget-row-head { display: flex; justify-content: space-between; font-size: 13px; margin-bottom: 5px; }
+.budget-row-head .over { color: var(--rust); font-weight: 500; }
+.budget-track { background: #EDEEE9; border-radius: 5px; height: 8px; overflow: hidden; }
+.budget-fill { height: 100%; border-radius: 5px; }
+
 .staging { margin-top: 16px; border-top: 1px solid var(--line); padding-top: 16px; }
 .staging-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; flex-wrap: wrap; gap: 8px; }
 .staging-head .title { font-family: var(--font-display), sans-serif; font-weight: 600; font-size: 14px; }

@@ -1,7 +1,8 @@
-import { CATEGORIES, fmt } from '@/lib/finance';
+import { fmt } from '@/lib/finance';
 
 export default function TransactionsTable({
   scoped,
+  categories,
   filterCat,
   onFilterCatChange,
   filterSearch,
@@ -36,8 +37,8 @@ export default function TransactionsTable({
       <div className="filters">
         <select value={filterCat} onChange={(e) => onFilterCatChange(e.target.value)}>
           <option value="__all__">Todas as categorias</option>
-          {CATEGORIES.map((c) => (
-            <option key={c} value={c}>{c}</option>
+          {categories.map((c) => (
+            <option key={c.name} value={c.name}>{c.name}</option>
           ))}
         </select>
         <input
@@ -87,8 +88,8 @@ export default function TransactionsTable({
                     value={t.category}
                     onChange={(e) => onCategoryChange(t, e.target.value)}
                   >
-                    {CATEGORIES.map((c) => (
-                      <option key={c} value={c}>{c}</option>
+                    {categories.map((c) => (
+                      <option key={c.name} value={c.name}>{c.name}</option>
                     ))}
                   </select>
                 </td>

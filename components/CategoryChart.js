@@ -2,12 +2,12 @@
 
 import 'chart.js/auto';
 import { Doughnut } from 'react-chartjs-2';
-import { CAT_COLORS, fmt } from '@/lib/finance';
+import { FALLBACK_CATEGORY_COLOR, fmt } from '@/lib/finance';
 
-export default function CategoryChart({ catEntries, chartRef }) {
+export default function CategoryChart({ catEntries, chartRef, catColors }) {
   const labels = catEntries.map((e) => e.cat);
   const values = catEntries.map((e) => e.val);
-  const colors = labels.map((l) => CAT_COLORS[l] || '#B4B2A9');
+  const colors = labels.map((l) => catColors[l] || FALLBACK_CATEGORY_COLOR);
   const total = values.reduce((a, b) => a + b, 0) || 1;
 
   const data = {
@@ -37,7 +37,7 @@ export default function CategoryChart({ catEntries, chartRef }) {
           <div className="legend">
             {catEntries.map((e) => (
               <span key={e.cat}>
-                <span className="sw" style={{ background: CAT_COLORS[e.cat] || '#B4B2A9' }} />
+                <span className="sw" style={{ background: catColors[e.cat] || FALLBACK_CATEGORY_COLOR }} />
                 {e.cat} {Math.round((e.val / total) * 100)}%
               </span>
             ))}

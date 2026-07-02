@@ -2,9 +2,9 @@
 
 import { useState } from 'react';
 import ParecerDoc from './ParecerDoc';
-import { buildDiagnostics, buildFallbackRecommendations, buildRecommendationsHtml, buildAiPayload } from '@/lib/finance';
+import { buildDiagnostics, buildBudgetDiagnostics, buildFallbackRecommendations, buildRecommendationsHtml, buildAiPayload } from '@/lib/finance';
 
-export default function ParecerPanel({ analysis, chartRef }) {
+export default function ParecerPanel({ analysis, chartRef, budgets, catColors }) {
   const [doc, setDoc] = useState(null);
   const [status, setStatus] = useState('');
   const [generating, setGenerating] = useState(false);
@@ -16,7 +16,9 @@ export default function ParecerPanel({ analysis, chartRef }) {
     }
 
     setGenerating(true);
-    const diagnostics = buildDiagnostics(analysis);
+    const diagnostics = buildDiagnostics(analysis).concat(
+      buildBudgetDiagnostics(analysis.catEntries, budgets, analysis.nMonths),
+    );
     const fallbackHtml = buildRecommendationsHtml(buildFallbackRecommendations(analysis));
     let chartImage = null;
     try {
@@ -80,6 +82,7 @@ export default function ParecerPanel({ analysis, chartRef }) {
           recsHtml={doc.recsHtml}
           aiGenerated={doc.aiGenerated}
           chartImage={doc.chartImage}
+          catColors={catColors}
         />
       )}
     </div>

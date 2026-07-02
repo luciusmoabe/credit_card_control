@@ -11,6 +11,8 @@ import SubscriptionsList from '@/components/SubscriptionsList';
 import InstallmentsTable from '@/components/InstallmentsTable';
 import ProjectionPanel from '@/components/ProjectionPanel';
 import ParecerPanel from '@/components/ParecerPanel';
+import CategoryManager from '@/components/CategoryManager';
+import BudgetProgress from '@/components/BudgetProgress';
 import {
   getTransactions,
   getOverrides,
@@ -19,6 +21,13 @@ import {
   deleteTransaction,
   deleteAllTransactions,
   upsertOverride,
+  getCategories,
+  createCategory,
+  updateCategory,
+  deleteCategory,
+  getBudgets,
+  upsertBudget,
+  deleteBudget,
 } from '@/lib/api';
 import {
   parseLines,
@@ -29,6 +38,8 @@ import {
   buildParcelamentos,
   dedupeTransactions,
   normDesc,
+  catColorMap,
+  DEFAULT_CATEGORIES,
 } from '@/lib/finance';
 
 function defaultPeriod() {
@@ -39,6 +50,8 @@ function defaultPeriod() {
 export default function Home() {
   const [txns, setTxns] = useState([]);
   const [overrides, setOverrides] = useState({});
+  const [categories, setCategories] = useState(DEFAULT_CATEGORIES);
+  const [budgets, setBudgets] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
@@ -62,13 +75,20 @@ export default function Home() {
     setLoading(true);
     setError('');
     try {
-      const [txRes, ovRes] = await Promise.all([getTransactions(), getOverrides()]);
+      const [txRes, ovRes, catRes, budgetRes] = await Promise.all([
+        getTransactions(),
+        getOverrides(),
+        getCategories(),
+        getBudgets(),
+      ]);
       setTxns(txRes);
       const map = {};
       ovRes.forEach((o) => {
         map[o.keyword] = o.category;
       });
       setOverrides(map);
+      setCategories(catRes);
+      setBudgets(budgetRes);
     } catch (e) {
       setError('Não foi possível carregar os dados: ' + e.message);
     } finally {
@@ -111,7 +131,7 @@ export default function Home() {
       setParseFeedback('Cole os lançamentos antes de analisar.');
       return;
     }
-    const { out, skipped, stoppedAt } = parseLines(importText, period, overrides);
+    const { out, skipped, stoppedAt } = parseLines(importText, period, overrides, categories);
     if (out.length === 0) {
       setParseFeedback('Nenhum lançamento reconhecido. Confira o formato das linhas ou ajuste manualmente.');
       return;
@@ -210,8 +230,64 @@ export default function Home() {
     }
   }
 
+  async function handleCreateCategory(name, color) {
+    try {
+      await createCategory(name, color);
+      await loadData();
+    } catch (e) {
+      setError('Não foi possível criar a categoria: ' + e.message);
+    }
+  }
+
+  async function handleRenameCategory(oldName, newName) {
+    try {
+      await updateCategory(oldName, { newName });
+      await loadData();
+    } catch (e) {
+      setError('Não foi possível renomear a categoria: ' + e.message);
+    }
+  }
+
+  async function handleRecolorCategory(name, color) {
+    try {
+      await updateCategory(name, { color });
+      await loadData();
+    } catch (e) {
+      setError('Não foi possível trocar a cor da categoria: ' + e.message);
+    }
+  }
+
+  async function handleDeleteCategory(name) {
+    if (!window.confirm(`Excluir a categoria "${name}"? Os lançamentos dela serão movidos para "Outros".`)) return;
+    try {
+      await deleteCategory(name);
+      await loadData();
+    } catch (e) {
+      setError('Não foi possível excluir a categoria: ' + e.message);
+    }
+  }
+
+  async function handleSetBudget(category, amount) {
+    try {
+      await upsertBudget(category, amount);
+      await loadData();
+    } catch (e) {
+      setError('Não foi possível salvar a meta: ' + e.message);
+    }
+  }
+
+  async function handleClearBudget(category) {
+    try {
+      await deleteBudget(category);
+      await loadData();
+    } catch (e) {
+      setError('Não foi possível remover a meta: ' + e.message);
+    }
+  }
+
   const hasData = txns.length > 0;
   const catChartRef = useRef(null);
+  const catColors = useMemo(() => catColorMap(categories), [categories]);
 
   return (
     <div className="wrap">
@@ -227,6 +303,7 @@ export default function Home() {
         staging={staging}
         onStagingChange={setStaging}
         overrides={overrides}
+        categories={categories}
         parseFeedback={parseFeedback}
         onParseFeedbackChange={setParseFeedback}
         onParse={handleParse}
@@ -238,6 +315,19 @@ export default function Home() {
       {error && <div className="panel hint">{error}</div>}
 
       {loading && <div className="panel hint">Carregando...</div>}
+
+      {!loading && (
+        <CategoryManager
+          categories={categories}
+          budgets={budgets}
+          onCreate={handleCreateCategory}
+          onRename={handleRenameCategory}
+          onRecolor={handleRecolorCategory}
+          onDelete={handleDeleteCategory}
+          onSetBudget={handleSetBudget}
+          onClearBudget={handleClearBudget}
+        />
+      )}
 
       {!loading && !hasData && (
         <div className="panel empty">
@@ -257,16 +347,18 @@ export default function Home() {
             filterBank={effectiveFilterBank}
             onFilterBankChange={setFilterBank}
           />
+          <BudgetProgress catEntries={analysis.catEntries} budgets={budgets} nMonths={analysis.nMonths} catColors={catColors} />
           <div className="charts">
-            <CategoryChart catEntries={analysis.catEntries} chartRef={catChartRef} />
+            <CategoryChart catEntries={analysis.catEntries} chartRef={catChartRef} catColors={catColors} />
             <TrendChart perPeriod={analysis.perPeriod} />
           </div>
           <SubscriptionsList subs={analysis.subs} />
           <InstallmentsTable parcRows={analysis.parcRows} />
           <ProjectionPanel parcRows={projection.parcRows} anchorPeriod={projection.anchorPeriod} />
-          <ParecerPanel analysis={analysis} chartRef={catChartRef} />
+          <ParecerPanel analysis={analysis} chartRef={catChartRef} budgets={budgets} catColors={catColors} />
           <TransactionsTable
             scoped={analysis.scoped}
+            categories={categories}
             filterCat={filterCat}
             onFilterCatChange={setFilterCat}
             filterSearch={filterSearch}
