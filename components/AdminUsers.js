@@ -139,6 +139,7 @@ export default function AdminUsers({ currentUserId }) {
             </tbody>
           </table>
         </div>
+        </div>
 
         <div style={{ width: '350px', background: 'var(--paper)', padding: '1.5rem', borderRadius: '8px', border: '1px solid var(--line)' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
