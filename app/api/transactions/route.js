@@ -61,10 +61,19 @@ export async function POST(request) {
 }
 
 export async function DELETE(request) {
+  const { searchParams } = new URL(request.url);
   const session = await getServerSession(authOptions);
   if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   const userId = session.user.id;
+  const period = searchParams.get('period');
+  const bank = searchParams.get('bank');
 
-  const deleted = await sql`DELETE FROM transactions WHERE user_id = ${userId} RETURNING id`;
+  const deleted = await sql`
+    DELETE FROM transactions 
+    WHERE user_id = ${userId}
+      AND (${period}::text IS NULL OR period = ${period})
+      AND (${bank}::text IS NULL OR bank = ${bank})
+    RETURNING id
+  `;
   return NextResponse.json({ deleted: deleted.length });
 }

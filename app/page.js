@@ -244,13 +244,11 @@ export default function Home() {
   }
 
   async function handleClearAll() {
-    const prevTxns = txns;
-    setTxns([]);
     try {
-      await deleteAllTransactions();
+      await deleteAllTransactions(effectiveFilterPeriod, effectiveFilterBank);
+      await loadData();
     } catch (e) {
-      setTxns(prevTxns);
-      setError('Não foi possível apagar os lançamentos: ' + e.message);
+      setError('Não foi possível excluir os lançamentos: ' + e.message);
     }
   }
 
@@ -418,10 +416,13 @@ export default function Home() {
     if (activeSection === 'my_account') {
       return (
         <>
+          <DangerZone 
+            txnCount={analysis.scoped.length} 
+            onClearAll={handleClearAll} 
+            period={effectiveFilterPeriod}
+            bank={effectiveFilterBank}
+          />
           <ChangePassword />
-          <div style={{ marginTop: 24 }}>
-            <DangerZone txnCount={txns.length} onClearAll={handleClearAll} />
-          </div>
         </>
       );
     }
