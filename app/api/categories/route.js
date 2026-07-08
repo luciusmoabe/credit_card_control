@@ -1,22 +1,46 @@
 import { NextResponse } from 'next/server';
 import { sql } from '@/lib/db';
+import { getServerSession } from 'next-auth/next';
+import { authOptions } from '@/lib/auth';
+import { DEFAULT_CATEGORIES } from '@/lib/finance';
 
 export async function GET(request) {
-  const { searchParams } = new URL(request.url);
-  const userId = searchParams.get('user_id') || 'default';
+  const session = await getServerSession(authOptions);
+  if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  const userId = session.user.id;
 
-  const rows = await sql`
+  let rows = await sql`
     SELECT name, color, default_key, is_system, sort_order
     FROM categories
     WHERE user_id = ${userId}
     ORDER BY sort_order, name
   `;
+
+  if (rows.length === 0) {
+    for (let i = 0; i < DEFAULT_CATEGORIES.length; i++) {
+      const c = DEFAULT_CATEGORIES[i];
+      const isSystem = c.name === 'Pagamento Fatura' || c.name === 'Outros';
+      await sql`
+        INSERT INTO categories (user_id, name, color, default_key, is_system, sort_order)
+        VALUES (${userId}, ${c.name}, ${c.color}, ${c.default_key || null}, ${isSystem}, ${i + 1})
+      `;
+    }
+    rows = await sql`
+      SELECT name, color, default_key, is_system, sort_order
+      FROM categories
+      WHERE user_id = ${userId}
+      ORDER BY sort_order, name
+    `;
+  }
+
   return NextResponse.json(rows);
 }
 
 export async function POST(request) {
+  const session = await getServerSession(authOptions);
+  if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  const userId = session.user.id;
   const body = await request.json();
-  const userId = body.user_id || 'default';
   const name = (body.name || '').trim();
   const color = body.color || '#B4B2A9';
 
@@ -42,8 +66,10 @@ export async function POST(request) {
 }
 
 export async function PATCH(request) {
+  const session = await getServerSession(authOptions);
+  if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  const userId = session.user.id;
   const body = await request.json();
-  const userId = body.user_id || 'default';
   const name = body.name;
   const newName = body.newName ? body.newName.trim() : undefined;
   const color = body.color;
@@ -81,8 +107,10 @@ export async function PATCH(request) {
 }
 
 export async function DELETE(request) {
+  const session = await getServerSession(authOptions);
+  if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  const userId = session.user.id;
   const body = await request.json();
-  const userId = body.user_id || 'default';
   const name = body.name;
 
   if (!name) {

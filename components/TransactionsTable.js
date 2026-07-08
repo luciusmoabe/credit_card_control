@@ -70,6 +70,38 @@ export default function TransactionsTable({
     if (e.key === 'Escape') setEditing(null);
   }
 
+  function handleExportCsv() {
+    if (!rows.length) return;
+    
+    // Create CSV content
+    const headers = ['Data', 'Descricao', 'Valor', 'Categoria', 'Banco', 'Tipo Conta', 'Parcela Atual', 'Total Parcelas'];
+    const csvContent = [
+      headers.join(';'),
+      ...rows.map(t => [
+        t.date,
+        // Escape quotes and wrap in quotes to handle descriptions with semicolons
+        `"${(t.description || '').replace(/"/g, '""')}"`,
+        t.value.toString().replace('.', ','),
+        `"${t.category || ''}"`,
+        `"${t.bank || ''}"`,
+        t.account_type === 'credit_card' ? 'Cartao de Credito' : 'Conta Corrente',
+        t.installment_current || '',
+        t.installment_total || ''
+      ].join(';'))
+    ].join('\n');
+
+    // Create and trigger download
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.setAttribute('href', url);
+    link.setAttribute('download', `lancamentos_${new Date().toISOString().split('T')[0]}.csv`);
+    link.style.visibility = 'hidden';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  }
+
   function EditableField({ txn, field, display, inputClassName, align, onCommit }) {
     const isEditing = editing && editing.id === txn.id && editing.field === field;
     if (isEditing) {
@@ -116,6 +148,14 @@ export default function TransactionsTable({
         value={filterSearch}
         onChange={(e) => onFilterSearchChange(e.target.value)}
       />
+      <button className="ghost" onClick={handleExportCsv} title="Exportar visíveis para CSV">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ width: 16, height: 16, marginRight: 6 }}>
+          <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+          <polyline points="7 10 12 15 17 10" />
+          <line x1="12" y1="15" x2="12" y2="3" />
+        </svg>
+        Exportar CSV
+      </button>
     </div>
   );
 
@@ -133,7 +173,7 @@ export default function TransactionsTable({
             <tr>
               <th className="sortable" onClick={() => toggleSort('date')}>Data{sortIndicator('date')}</th>
               <th className="sortable" onClick={() => toggleSort('description')}>Descrição{sortIndicator('description')}</th>
-              <th>Banco</th>
+              <th>Origem</th>
               <th>Categoria</th>
               <th className="sortable" style={{ textAlign: 'right' }} onClick={() => toggleSort('value')}>Valor{sortIndicator('value')}</th>
               <th></th>
@@ -155,7 +195,12 @@ export default function TransactionsTable({
                 <td>
                   <EditableField txn={t} field="description" display={t.description} inputClassName="staging-row-edit" onCommit={commitDescription} />
                 </td>
-                <td><span className="tag">{t.bank || 'Não informado'}</span></td>
+                <td>
+                  <span className="tag" style={{ marginRight: '4px', background: 'var(--foreground)', color: 'var(--background)' }}>
+                    {t.account_type === 'checking_account' ? '🏦 Conta' : '💳 Cartão'}
+                  </span>
+                  <span className="tag">{t.bank || 'Não informado'}</span>
+                </td>
                 <td>
                   <select
                     className="cat-select"
@@ -200,6 +245,9 @@ export default function TransactionsTable({
             <div className="txn-card-meta">
               <span className="mono">
                 <EditableField txn={t} field="date" display={t.date} inputClassName="staging-row-edit date" onCommit={commitDate} />
+              </span>
+              <span className="tag" style={{ marginRight: '4px', background: 'var(--foreground)', color: 'var(--background)' }}>
+                {t.account_type === 'checking_account' ? '🏦 Conta' : '💳 Cartão'}
               </span>
               <span className="tag">{t.bank || 'Não informado'}</span>
               <select

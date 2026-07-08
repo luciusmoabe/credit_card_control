@@ -1,7 +1,12 @@
 import { NextResponse } from 'next/server';
 import { sql } from '@/lib/db';
+import { getServerSession } from 'next-auth/next';
+import { authOptions } from "@/lib/auth";
 
 export async function PATCH(request, { params }) {
+  const session = await getServerSession(authOptions);
+  if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  const userId = session.user.id;
   const { id } = await params;
   const body = await request.json();
 
@@ -23,8 +28,8 @@ export async function PATCH(request, { params }) {
       bank = COALESCE(${body.bank ?? null}, bank),
       value = COALESCE(${body.value ?? null}, value),
       category = COALESCE(${body.category ?? null}, category)
-    WHERE id = ${id}::int
-    RETURNING id, user_id, date, description, bank, period, value, category, created_at
+    WHERE id = ${id}::int AND user_id = ${userId}
+    RETURNING id, user_id, date, description, bank, period, value, category, created_at, account_type
   `;
 
   if (!row) {
@@ -35,9 +40,12 @@ export async function PATCH(request, { params }) {
 }
 
 export async function DELETE(request, { params }) {
+  const session = await getServerSession(authOptions);
+  if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  const userId = session.user.id;
   const { id } = await params;
 
-  const [row] = await sql`DELETE FROM transactions WHERE id = ${id}::int RETURNING id`;
+  const [row] = await sql`DELETE FROM transactions WHERE id = ${id}::int AND user_id = ${userId} RETURNING id`;
 
   if (!row) {
     return NextResponse.json({ error: 'Lançamento não encontrado.' }, { status: 404 });

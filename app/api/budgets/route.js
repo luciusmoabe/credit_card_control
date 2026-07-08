@@ -1,9 +1,12 @@
 import { NextResponse } from 'next/server';
 import { sql } from '@/lib/db';
+import { getServerSession } from 'next-auth/next';
+import { authOptions } from '@/lib/auth';
 
 export async function GET(request) {
-  const { searchParams } = new URL(request.url);
-  const userId = searchParams.get('user_id') || 'default';
+  const session = await getServerSession(authOptions);
+  if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  const userId = session.user.id;
 
   const rows = await sql`
     SELECT user_id, category, monthly_amount
@@ -15,8 +18,10 @@ export async function GET(request) {
 }
 
 export async function POST(request) {
+  const session = await getServerSession(authOptions);
+  if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  const userId = session.user.id;
   const body = await request.json();
-  const userId = body.user_id || 'default';
   const category = body.category;
   const monthlyAmount = body.monthly_amount;
 
@@ -34,8 +39,10 @@ export async function POST(request) {
 }
 
 export async function DELETE(request) {
+  const session = await getServerSession(authOptions);
+  if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  const userId = session.user.id;
   const body = await request.json();
-  const userId = body.user_id || 'default';
   const category = body.category;
 
   if (!category) {

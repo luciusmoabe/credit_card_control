@@ -9,7 +9,7 @@ export default function ProjectionPanel({ parcRows, anchorPeriod }) {
     return (
       <div className="panel">
         <h2>
-          Comprometimento futuro <span className="sub">quanto de parcelas ainda vai cair em cada fatura</span>
+          Comprometimento futuro <span className="sub">quanto de parcelas ainda vai cair em cada mês</span>
         </h2>
         <div className="kpi-grid" style={{ marginBottom: 16 }}>
           <div className="kpi"><div className="lbl">Próximo mês</div><div className="val">{fmt(0)}</div></div>
@@ -48,7 +48,7 @@ export default function ProjectionPanel({ parcRows, anchorPeriod }) {
   return (
     <div className="panel">
       <h2>
-        Comprometimento futuro <span className="sub">quanto de parcelas ainda vai cair em cada fatura</span>
+        Comprometimento futuro <span className="sub">quanto de parcelas ainda vai cair em cada mês</span>
       </h2>
       <div className="kpi-grid" style={{ marginBottom: 16 }}>
         <div className="kpi"><div className="lbl">Próximo mês</div><div className="val">{fmt(nextMonth)}</div></div>

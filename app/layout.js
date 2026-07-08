@@ -1,4 +1,6 @@
 import { Space_Grotesk, Inter, IBM_Plex_Mono } from "next/font/google";
+import Providers from "@/components/Providers";
+import Toast from "@/components/Toast";
 import "./globals.css";
 
 const spaceGrotesk = Space_Grotesk({
@@ -20,14 +22,31 @@ const ibmPlexMono = IBM_Plex_Mono({
 });
 
 export const metadata = {
-  title: "Painel de Faturas",
-  description: "Painel de faturas de cartões de crédito",
+  title: "Painel Financeiro",
+  description: "Painel SaaS de controle financeiro corporativo",
 };
 
 export default function RootLayout({ children }) {
   return (
-    <html lang="pt-BR" className={`${spaceGrotesk.variable} ${inter.variable} ${ibmPlexMono.variable}`}>
-      <body>{children}</body>
+    <html lang="pt-BR" className={`${spaceGrotesk.variable} ${inter.variable} ${ibmPlexMono.variable}`} suppressHydrationWarning>
+      <head>
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `
+              (function() {
+                try {
+                  var theme = localStorage.getItem('theme') || 'light';
+                  document.documentElement.setAttribute('data-theme', theme);
+                } catch (e) {}
+              })();
+            `,
+          }}
+        />
+      </head>
+      <body>
+        <Providers>{children}</Providers>
+        <Toast />
+      </body>
     </html>
   );
 }

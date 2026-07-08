@@ -42,7 +42,7 @@ function ColorSwatchPicker({ value, disabled, onChange }) {
             />
           ))}
           <label className="color-swatch-custom" title="Outra cor">
-            <input type="color" value={value} onChange={(e) => { onChange(e.target.value); setOpen(false); }} />
+            <input type="color" value={value} onChange={(e) => { onChange(e.target.value); }} />
           </label>
         </div>
       )}

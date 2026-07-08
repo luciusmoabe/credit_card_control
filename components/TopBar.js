@@ -10,6 +10,8 @@ export default function TopBar({
   onFilterPeriodChange,
   filterBank,
   onFilterBankChange,
+  filterAccountType,
+  onFilterAccountTypeChange,
 }) {
   return (
     <div className="topbar">
@@ -28,6 +30,11 @@ export default function TopBar({
             {banks.map((b) => (
               <option key={b} value={b}>{b}</option>
             ))}
+          </select>
+          <select value={filterAccountType} onChange={(e) => onFilterAccountTypeChange(e.target.value)}>
+            <option value="__all__">Todas as contas</option>
+            <option value="credit_card">💳 Cartão de Crédito</option>
+            <option value="checking_account">🏦 Conta-Corrente</option>
           </select>
         </div>
       )}

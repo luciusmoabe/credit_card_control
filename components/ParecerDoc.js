@@ -18,7 +18,7 @@ export default function ParecerDoc({ a, diagnostics, recsHtml, aiGenerated, char
     <div id="parecer-doc">
       <div className="doc-head parecer-section">
         <div>
-          <p className="doc-eyebrow">Painel de Faturas · Educação Financeira</p>
+          <p className="doc-eyebrow">Painel Financeiro Integrado · Educação Financeira</p>
           <p className="doc-title">Parecer Financeiro Educativo</p>
           <div className="doc-meta">{escopo} · Emitido em {dataEmissao}</div>
         </div>
@@ -158,7 +158,7 @@ export default function ParecerDoc({ a, diagnostics, recsHtml, aiGenerated, char
 
       <div className="doc-foot parecer-section">
         Este parecer tem caráter educativo e foi gerado automaticamente a partir dos lançamentos importados no
-        Painel de Faturas. Ele não substitui aconselhamento financeiro profissional individualizado. Revise as
+        Painel Financeiro Integrado. Ele não substitui aconselhamento financeiro profissional individualizado. Revise as
         categorias dos lançamentos para maior precisão da análise.
       </div>
     </div>

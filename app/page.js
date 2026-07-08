@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
+import { useSession } from 'next-auth/react';
 import Sidebar from '@/components/Sidebar';
 import TopBar from '@/components/TopBar';
 import KpiGrid from '@/components/KpiGrid';
@@ -15,6 +16,10 @@ import ParecerPanel from '@/components/ParecerPanel';
 import CategoryManager from '@/components/CategoryManager';
 import DangerZone from '@/components/DangerZone';
 import BudgetProgress from '@/components/BudgetProgress';
+import AdminUsers from '@/components/AdminUsers';
+import ChangePassword from '@/components/ChangePassword';
+import AccountTypeChart from '@/components/AccountTypeChart';
+import ManualEntry from '@/components/ManualEntry';
 import {
   getTransactions,
   getOverrides,
@@ -50,6 +55,7 @@ function defaultPeriod() {
 }
 
 export default function Home() {
+  const { data: session, status } = useSession({ required: true });
   const [activeSection, setActiveSection] = useState('overview');
 
   const [txns, setTxns] = useState([]);
@@ -62,6 +68,7 @@ export default function Home() {
   const [periodLabel, setPeriodLabel] = useState(defaultPeriod());
   const [bankLabel, setBankLabel] = useState('');
   const [importText, setImportText] = useState('');
+  const [isCheckingAccount, setIsCheckingAccount] = useState(false);
   const [staging, setStaging] = useState([]);
   const [parseFeedback, setParseFeedback] = useState('');
 
@@ -70,6 +77,7 @@ export default function Home() {
   const [filterBank, setFilterBank] = useState('__all__');
   const [filterCat, setFilterCat] = useState('__all__');
   const [filterSearch, setFilterSearch] = useState('');
+  const [filterAccountType, setFilterAccountType] = useState('__all__');
 
   useEffect(() => {
     loadData();
@@ -91,7 +99,9 @@ export default function Home() {
         map[o.keyword] = o.category;
       });
       setOverrides(map);
-      setCategories(catRes);
+      const systemCats = DEFAULT_CATEGORIES.filter(c => c.name === 'Outros' || c.name === 'Pagamento Fatura');
+      const missingSys = systemCats.filter(sc => !catRes.some(c => c.name === sc.name));
+      setCategories([...catRes, ...missingSys.map(c => ({ ...c, is_system: true }))]);
       setBudgets(budgetRes);
     } catch (e) {
       setError('Não foi possível carregar os dados: ' + e.message);
@@ -113,8 +123,8 @@ export default function Home() {
   const effectiveFilterBank = filterBank === '__all__' || banks.includes(filterBank) ? filterBank : '__all__';
 
   const analysis = useMemo(
-    () => computeAnalysis({ txns, selPeriod: effectiveFilterPeriod, selBank: effectiveFilterBank }),
-    [txns, effectiveFilterPeriod, effectiveFilterBank],
+    () => computeAnalysis({ txns, selPeriod: effectiveFilterPeriod, selBank: effectiveFilterBank, selAccountType: filterAccountType }),
+    [txns, effectiveFilterPeriod, effectiveFilterBank, filterAccountType],
   );
 
   const ticketTitle = useMemo(
@@ -135,7 +145,7 @@ export default function Home() {
       setParseFeedback('Cole os lançamentos antes de analisar.');
       return;
     }
-    const { out, skipped, stoppedAt } = parseLines(importText, period, overrides, categories);
+    const { out, skipped, stoppedAt } = parseLines(importText, period, overrides, categories, isCheckingAccount);
     if (out.length === 0) {
       setParseFeedback('Nenhum lançamento reconhecido. Confira o formato das linhas ou ajuste manualmente.');
       return;
@@ -164,6 +174,7 @@ export default function Home() {
       description: t.description,
       value: t.value,
       category: t.category,
+      account_type: isCheckingAccount ? 'checking_account' : 'credit_card',
     }));
     const { newOnes, duplicateCount } = dedupeTransactions(finalized, txns);
 
@@ -184,6 +195,15 @@ export default function Home() {
       await loadData();
     } catch (e) {
       setParseFeedback('Erro ao salvar os lançamentos: ' + e.message);
+    }
+  }
+
+  async function handleSaveManualEntry(transactions) {
+    try {
+      await saveTransactions(transactions);
+      await loadData();
+    } catch (e) {
+      throw new Error('Erro ao salvar o lançamento: ' + e.message);
     }
   }
 
@@ -212,6 +232,7 @@ export default function Home() {
   }
 
   async function handleDeleteTransaction(txn) {
+    if (!window.confirm(`Excluir o lançamento "${txn.description}" (${txn.date})?`)) return;
     const prevTxns = txns;
     setTxns((cur) => cur.filter((t) => t.id !== txn.id));
     try {
@@ -296,23 +317,33 @@ export default function Home() {
 
     if (activeSection === 'import') {
       return (
-        <ImportPanel
-          periodLabel={periodLabel}
-          onPeriodLabelChange={setPeriodLabel}
-          bankLabel={bankLabel}
-          onBankLabelChange={setBankLabel}
-          importText={importText}
-          onImportTextChange={setImportText}
-          staging={staging}
-          onStagingChange={setStaging}
-          overrides={overrides}
-          categories={categories}
-          parseFeedback={parseFeedback}
-          onParseFeedbackChange={setParseFeedback}
-          onParse={handleParse}
-          onConfirm={handleConfirmStaging}
-          onCancel={handleCancelStaging}
-        />
+        <>
+          <ManualEntry
+            onSave={handleSaveManualEntry}
+            banks={banks}
+            categories={categories}
+            overrides={overrides}
+          />
+          <ImportPanel
+            periodLabel={periodLabel}
+            onPeriodLabelChange={setPeriodLabel}
+            bankLabel={bankLabel}
+            onBankLabelChange={setBankLabel}
+            isCheckingAccount={isCheckingAccount}
+            onIsCheckingAccountChange={setIsCheckingAccount}
+            importText={importText}
+            onImportTextChange={setImportText}
+            staging={staging}
+            onStagingChange={setStaging}
+            overrides={overrides}
+            categories={categories}
+            parseFeedback={parseFeedback}
+            onParseFeedbackChange={setParseFeedback}
+            onParse={handleParse}
+            onConfirm={handleConfirmStaging}
+            onCancel={handleCancelStaging}
+          />
+        </>
       );
     }
 
@@ -381,12 +412,21 @@ export default function Home() {
       return <ParecerPanel analysis={analysis} budgets={budgets} catColors={catColors} categories={categories} />;
     }
 
+    if (activeSection === 'admin_users' && session?.user?.role === 'admin') {
+      return <AdminUsers currentUserId={session?.user?.id} />;
+    }
+
+    if (activeSection === 'my_account') {
+      return <ChangePassword />;
+    }
+
     // overview
     return (
       <>
         <KpiGrid analysis={analysis} />
         <BudgetProgress catEntries={analysis.catEntries} budgets={budgets} nMonths={analysis.nMonths} catColors={catColors} />
         <div className="charts">
+          <AccountTypeChart analysis={analysis} />
           <CategoryChart catEntries={analysis.catEntries} catColors={catColors} />
           <TrendChart perPeriod={analysis.perPeriod} />
         </div>
@@ -394,21 +434,31 @@ export default function Home() {
     );
   }
 
+  if (status === 'loading') {
+    return <div style={{ padding: '2rem' }}>Carregando sessão...</div>;
+  }
+
   return (
     <div className="app-shell">
-      <Sidebar active={activeSection} onSelect={setActiveSection} />
+      <Sidebar active={activeSection} onSelect={setActiveSection} role={session?.user?.role} userName={session?.user?.name} />
       <div className="app-content">
-        <TopBar
-          title={ticketTitle}
-          total={analysis.totalSpend}
-          hasData={hasData}
-          periods={periods}
-          banks={banks}
-          filterPeriod={effectiveFilterPeriod}
-          onFilterPeriodChange={setFilterPeriod}
-          filterBank={effectiveFilterBank}
-          onFilterBankChange={setFilterBank}
-        />
+        {activeSection !== 'admin_users' && activeSection !== 'my_account' ? (
+          <TopBar
+            title={ticketTitle}
+            total={analysis.totalSpend}
+            hasData={hasData}
+            periods={periods}
+            banks={banks}
+            filterPeriod={effectiveFilterPeriod}
+            onFilterPeriodChange={setFilterPeriod}
+            filterBank={effectiveFilterBank}
+            onFilterBankChange={setFilterBank}
+            filterAccountType={filterAccountType}
+            onFilterAccountTypeChange={setFilterAccountType}
+          />
+        ) : (
+          <div style={{ height: '32px' }} />
+        )}
         <main id="section-content">
           {error && <div className="panel hint">{error}</div>}
           {renderSection()}

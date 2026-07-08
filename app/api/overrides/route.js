@@ -1,9 +1,12 @@
 import { NextResponse } from 'next/server';
 import { sql } from '@/lib/db';
+import { getServerSession } from 'next-auth/next';
+import { authOptions } from '@/lib/auth';
 
 export async function GET(request) {
-  const { searchParams } = new URL(request.url);
-  const userId = searchParams.get('user_id') || 'default';
+  const session = await getServerSession(authOptions);
+  if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  const userId = session.user.id;
 
   const rows = await sql`
     SELECT user_id, keyword, category
@@ -15,8 +18,11 @@ export async function GET(request) {
 }
 
 export async function POST(request) {
+  const session = await getServerSession(authOptions);
+  if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  const userId = session.user.id;
   const body = await request.json();
-  const { keyword, category, user_id: userId = 'default' } = body;
+  const { keyword, category } = body;
 
   if (!keyword || !category) {
     return NextResponse.json({ error: 'keyword e category são obrigatórios.' }, { status: 400 });

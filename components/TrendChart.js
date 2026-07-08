@@ -20,7 +20,7 @@ export default function TrendChart({ perPeriod }) {
       tooltip: { callbacks: { label: (c) => fmt(c.raw) } },
     },
     scales: {
-      y: { ticks: { callback: (v) => 'R$ ' + v }, grid: { color: '#E5E7E0' } },
+      y: { ticks: { callback: (v) => 'R$ ' + v }, grid: { color: 'rgba(150, 150, 150, 0.2)' } },
       x: { grid: { display: false } },
     },
   };

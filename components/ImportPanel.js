@@ -10,6 +10,8 @@ export default function ImportPanel({
   onPeriodLabelChange,
   bankLabel,
   onBankLabelChange,
+  isCheckingAccount,
+  onIsCheckingAccountChange,
   importText,
   onImportTextChange,
   staging,
@@ -36,10 +38,21 @@ export default function ImportPanel({
     }
   }
 
-  async function handlePdfFile(e) {
+  async function handleFile(e) {
     const file = e.target.files && e.target.files[0];
     e.target.value = '';
     if (!file) return;
+
+    if (file.name.toLowerCase().endsWith('.csv')) {
+      const reader = new FileReader();
+      reader.onload = (evt) => {
+        onImportTextChange(evt.target.result);
+        onParseFeedbackChange('Arquivo CSV carregado. Clique em "Analisar lançamentos" para continuar.');
+      };
+      reader.readAsText(file);
+      return;
+    }
+
     setReadingPdf(true);
     onParseFeedbackChange('Lendo PDF...');
     try {
@@ -83,7 +96,7 @@ export default function ImportPanel({
   return (
     <div className="panel">
       <h2>
-        Importar fatura <span className="sub">de qualquer banco — cole o texto, um CSV ou faça upload do PDF</span>
+        Importar dados <span className="sub">de qualquer banco — cole o texto, um CSV ou faça upload do PDF</span>
       </h2>
       <div className="row" style={{ marginBottom: 10 }}>
         <input
@@ -108,24 +121,34 @@ export default function ImportPanel({
           <option value="__outro__">Outro (digitar ao lado)</option>
         </select>
         <button className="ghost" onClick={() => fileInputRef.current?.click()} disabled={readingPdf}>
-          {readingPdf ? 'Lendo PDF...' : 'Carregar PDF'}
+          {readingPdf ? 'Lendo...' : 'Carregar Arquivo'}
         </button>
         <input
           ref={fileInputRef}
           type="file"
-          accept="application/pdf"
+          accept="application/pdf,.csv"
           style={{ display: 'none' }}
-          onChange={handlePdfFile}
+          onChange={handleFile}
         />
         <button onClick={onParse}>Analisar lançamentos</button>
       </div>
+      <div className="row" style={{ marginBottom: 10 }}>
+        <label style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: '0.9rem', cursor: 'pointer' }}>
+          <input
+            type="checkbox"
+            checked={isCheckingAccount}
+            onChange={(e) => onIsCheckingAccountChange(e.target.checked)}
+          />
+          É um extrato de conta-corrente (importar apenas saídas)
+        </label>
+      </div>
       <textarea
-        placeholder="Cole aqui os lançamentos da fatura..."
+        placeholder="Cole aqui os lançamentos do mês..."
         value={importText}
         onChange={(e) => onImportTextChange(e.target.value)}
       />
       <p className="hint">
-        Aceita quase qualquer formato de fatura ou extrato: linhas com data + descrição + valor
+        Aceita quase qualquer formato de extrato ou fatura: linhas com data + descrição + valor
         (<code>DD/MM</code>, <code>DD/MM/AAAA</code> ou <code>AAAA-MM-DD</code>), CSV exportado do
         app do banco (<code>data,descrição,valor</code>) e valores com <code>R$</code>,{' '}
         <code>US$</code>, ponto ou vírgula decimal. Pagamentos/estornos podem vir com{' '}

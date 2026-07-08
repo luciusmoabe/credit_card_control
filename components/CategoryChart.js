@@ -12,7 +12,7 @@ export default function CategoryChart({ catEntries, catColors }) {
 
   const data = {
     labels,
-    datasets: [{ data: values, backgroundColor: colors, borderColor: '#FFFFFF', borderWidth: 2 }],
+    datasets: [{ data: values, backgroundColor: colors, borderColor: 'transparent', borderWidth: 2 }],
   };
 
   const options = {
