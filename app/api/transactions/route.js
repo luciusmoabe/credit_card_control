@@ -67,12 +67,14 @@ export async function DELETE(request) {
   const userId = session.user.id;
   const period = searchParams.get('period');
   const bank = searchParams.get('bank');
+  const category = searchParams.get('category');
 
   const deleted = await sql`
     DELETE FROM transactions 
     WHERE user_id = ${userId}
       AND (${period}::text IS NULL OR period = ${period})
       AND (${bank}::text IS NULL OR bank = ${bank})
+      AND (${category}::text IS NULL OR category = ${category})
     RETURNING id
   `;
   return NextResponse.json({ deleted: deleted.length });

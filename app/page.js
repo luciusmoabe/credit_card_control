@@ -243,9 +243,9 @@ export default function Home() {
     }
   }
 
-  async function handleClearAll() {
+  async function handleClearAll(delPeriod, delBank, delCategory) {
     try {
-      await deleteAllTransactions(effectiveFilterPeriod, effectiveFilterBank);
+      await deleteAllTransactions(delPeriod, delBank, delCategory);
       await loadData();
     } catch (e) {
       setError('Não foi possível excluir os lançamentos: ' + e.message);
@@ -417,10 +417,11 @@ export default function Home() {
       return (
         <>
           <DangerZone 
-            txnCount={analysis.scoped.length} 
+            txns={txns} 
+            periods={periods}
+            banks={banks}
+            categories={categories.map(c => c.name).sort()}
             onClearAll={handleClearAll} 
-            period={effectiveFilterPeriod}
-            bank={effectiveFilterBank}
           />
           <ChangePassword />
         </>
