@@ -35,6 +35,8 @@ export default function TransactionsTable({
     return sortDir === 'asc' ? diff : -diff;
   });
 
+  const totalValue = rows.reduce((sum, t) => sum + t.value, 0);
+
   function toggleSort(key) {
     if (sortKey === key) {
       setSortDir((d) => (d === 'asc' ? 'desc' : 'asc'));
@@ -223,6 +225,15 @@ export default function TransactionsTable({
               </tr>
             ))}
           </tbody>
+          <tfoot>
+            <tr>
+              <th colSpan="4" style={{ textAlign: 'right', fontSize: '12px' }}>Total dos Lançamentos</th>
+              <th className={`mono ${totalValue < 0 ? 'neg' : ''}`} style={{ textAlign: 'right', fontSize: '13px' }}>
+                {fmt(totalValue)}
+              </th>
+              <th></th>
+            </tr>
+          </tfoot>
         </table>
       </div>
 
