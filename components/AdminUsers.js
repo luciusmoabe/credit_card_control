@@ -104,6 +104,7 @@ export default function AdminUsers({ currentUserId }) {
       <div style={{ display: 'flex', gap: '2rem' }}>
         <div style={{ flex: 1 }}>
           <h3>Usuários Cadastrados</h3>
+          <div className="scroll-x">
           <table style={{ width: '100%', borderCollapse: 'collapse', marginTop: '1rem' }}>
             <thead>
               <tr style={{ borderBottom: '1px solid var(--border)', textAlign: 'left' }}>

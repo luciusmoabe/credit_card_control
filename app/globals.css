@@ -56,6 +56,10 @@
   padding: 0;
 }
 
+html, body {
+  overflow-x: hidden;
+}
+
 body {
   background: var(--bg);
   color: var(--ink);
@@ -157,7 +161,26 @@ body {
     transform: translateX(0);
   }
 
-  .topbar { padding: 20px 18px 0; }
+  .topbar { 
+    flex-direction: column-reverse;
+    padding: 18px 18px 0; 
+    gap: 16px;
+  }
+  .topbar-left {
+    width: 100%;
+  }
+  .topbar-right {
+    width: 100%;
+    justify-content: flex-end;
+    margin-top: 0;
+  }
+  .topbar-filters select, .topbar-filters input {
+    max-width: 100%;
+    flex: 1 1 auto;
+  }
+  .ticket {
+    width: 100%;
+  }
   #section-content { padding: 0 18px 80px; } /* extra padding for fab */
 }
 

@@ -55,17 +55,20 @@ export default function ParecerDoc({ a, diagnostics, recsHtml, aiGenerated, char
 
       <div className="parecer-section">
         <h3><span className="n">2</span> Para onde foi o dinheiro</h3>
-        {chartImage && <img className="chart-snap" src={chartImage} alt="Gastos por categoria" />}
         {chartImage && (
-          <div className="chart-legend">
-            {a.catEntries.map((c) => (
-              <span key={c.cat}>
-                <span className="sw" style={{ background: catColors[c.cat] || FALLBACK_CATEGORY_COLOR }} />
-                {c.cat} {fmtPct(c.pct)}
-              </span>
-            ))}
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '32px', marginBottom: '16px', flexWrap: 'wrap' }}>
+            <img className="chart-snap" src={chartImage} alt="Gastos por categoria" style={{ margin: 0 }} />
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', fontSize: '11px', color: 'var(--ink-soft)' }}>
+              {a.catEntries.map((c) => (
+                <div key={c.cat} style={{ display: 'flex', alignItems: 'center' }}>
+                  <span style={{ width: '10px', height: '10px', borderRadius: '2px', display: 'inline-block', marginRight: '6px', flexShrink: 0, background: catColors[c.cat] || FALLBACK_CATEGORY_COLOR }} />
+                  <span>{c.cat} <strong style={{ marginLeft: '4px' }}>{fmtPct(c.pct)}</strong></span>
+                </div>
+              ))}
+            </div>
           </div>
         )}
+        <div className="scroll-x">
         <table>
           <thead><tr><th>Categoria</th><th style={{ textAlign: 'right' }}>Valor</th><th style={{ textAlign: 'right' }}>% do total</th></tr></thead>
           <tbody>
@@ -85,10 +88,12 @@ export default function ParecerDoc({ a, diagnostics, recsHtml, aiGenerated, char
             })}
           </tbody>
         </table>
+        </div>
       </div>
 
       <div className="parecer-section">
         <h3><span className="n">3</span> Maiores compras do período</h3>
+        <div className="scroll-x">
         <table>
           <thead><tr><th>Data</th><th>Descrição</th><th style={{ textAlign: 'right' }}>Valor</th></tr></thead>
           <tbody>
@@ -124,6 +129,7 @@ export default function ParecerDoc({ a, diagnostics, recsHtml, aiGenerated, char
       {a.parcRows.length > 0 && (
         <div className="parecer-section">
           <h3><span className="n">{parcSectionN}</span> Parcelamentos ativos</h3>
+          <div className="scroll-x">
           <table>
             <thead><tr><th>Descrição</th><th style={{ textAlign: 'right' }}>Parcela</th><th style={{ textAlign: 'right' }}>Valor/mês</th><th style={{ textAlign: 'right' }}>Falta pagar</th></tr></thead>
             <tbody>
@@ -137,6 +143,7 @@ export default function ParecerDoc({ a, diagnostics, recsHtml, aiGenerated, char
               ))}
             </tbody>
           </table>
+          </div>
         </div>
       )}
 
