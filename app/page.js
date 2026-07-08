@@ -360,7 +360,6 @@ export default function Home() {
             onSetBudget={handleSetBudget}
             onClearBudget={handleClearBudget}
           />
-          <DangerZone txnCount={txns.length} onClearAll={handleClearAll} />
         </>
       );
     }
@@ -417,7 +416,14 @@ export default function Home() {
     }
 
     if (activeSection === 'my_account') {
-      return <ChangePassword />;
+      return (
+        <>
+          <ChangePassword />
+          <div style={{ marginTop: 24 }}>
+            <DangerZone txnCount={txns.length} onClearAll={handleClearAll} />
+          </div>
+        </>
+      );
     }
 
     // overview
@@ -440,25 +446,24 @@ export default function Home() {
 
   return (
     <div className="app-shell">
-      <Sidebar active={activeSection} onSelect={setActiveSection} role={session?.user?.role} userName={session?.user?.name} />
+      <Sidebar active={activeSection} onSelect={setActiveSection} role={session?.user?.role} />
       <div className="app-content">
-        {activeSection !== 'admin_users' && activeSection !== 'my_account' ? (
-          <TopBar
-            title={ticketTitle}
-            total={analysis.totalSpend}
-            hasData={hasData}
-            periods={periods}
-            banks={banks}
-            filterPeriod={effectiveFilterPeriod}
-            onFilterPeriodChange={setFilterPeriod}
-            filterBank={effectiveFilterBank}
-            onFilterBankChange={setFilterBank}
-            filterAccountType={filterAccountType}
-            onFilterAccountTypeChange={setFilterAccountType}
-          />
-        ) : (
-          <div style={{ height: '32px' }} />
-        )}
+        <TopBar
+          title={ticketTitle}
+          total={analysis.totalSpend}
+          hasData={hasData}
+          periods={periods}
+          banks={banks}
+          filterPeriod={effectiveFilterPeriod}
+          onFilterPeriodChange={setFilterPeriod}
+          filterBank={effectiveFilterBank}
+          onFilterBankChange={setFilterBank}
+          filterAccountType={filterAccountType}
+          onFilterAccountTypeChange={setFilterAccountType}
+          showFilters={!['admin_users', 'my_account', 'categories', 'import'].includes(activeSection)}
+          userName={session?.user?.name}
+          onProfileClick={() => setActiveSection('my_account')}
+        />
         <main id="section-content">
           {error && <div className="panel hint">{error}</div>}
           {renderSection()}

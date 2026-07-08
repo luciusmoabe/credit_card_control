@@ -69,35 +69,22 @@ const ICONS = {
 };
 
 export const SECTIONS = [
-  { id: 'overview', label: 'Visão Geral' },
-  { id: 'transactions', label: 'Lançamentos' },
-  { id: 'import', label: 'Importar' },
-  { id: 'subscriptions', label: 'Assinaturas' },
-  { id: 'commitments', label: 'Parcelamentos' },
+  { id: 'overview', label: 'Dashboard' },
+  { type: 'divider' },
   { id: 'categories', label: 'Categorias & Metas' },
-  { id: 'parecer', label: 'Parecer' },
-  { id: 'my_account', label: 'Minha Conta' },
+  { id: 'import', label: 'Importação de Dados' },
+  { type: 'divider' },
+  { id: 'transactions', label: 'Lançamentos' },
+  { id: 'commitments', label: 'Parcelamentos' },
+  { id: 'subscriptions', label: 'Assinaturas' },
+  { type: 'divider' },
+  { id: 'parecer', label: 'Parecer do Especialista' },
 ];
 
-import { useState, useEffect } from 'react';
-import { signOut } from "next-auth/react";
+import { useState } from 'react';
 
-export default function Sidebar({ active, onSelect, role, userName }) {
+export default function Sidebar({ active, onSelect, role }) {
   const [isOpen, setIsOpen] = useState(false);
-  const [theme, setTheme] = useState('light');
-
-  useEffect(() => {
-    const savedTheme = localStorage.getItem('theme') || 'light';
-    setTheme(savedTheme);
-    document.documentElement.setAttribute('data-theme', savedTheme);
-  }, []);
-
-  const toggleTheme = () => {
-    const newTheme = theme === 'light' ? 'dark' : 'light';
-    setTheme(newTheme);
-    localStorage.setItem('theme', newTheme);
-    document.documentElement.setAttribute('data-theme', newTheme);
-  };
 
   const toggleSidebar = () => setIsOpen(!isOpen);
   const handleSelect = (id) => {
@@ -125,59 +112,37 @@ export default function Sidebar({ active, onSelect, role, userName }) {
         <span className="sidebar-brand-name">Painel Financeiro</span>
       </div>
       <ul className="sidebar-nav">
-        {SECTIONS.map((s) => (
-          <li key={s.id}>
-            <button
-              className={`sidebar-link ${active === s.id ? 'active' : ''}`}
-              onClick={() => handleSelect(s.id)}
-            >
-              <span className="sidebar-icon">{ICONS[s.id]}</span>
-              {s.label}
-            </button>
-          </li>
-        ))}
+        {SECTIONS.map((s, idx) => {
+          if (s.type === 'divider') {
+            return <hr key={`div-${idx}`} className="sidebar-divider" />;
+          }
+          return (
+            <li key={s.id}>
+              <button
+                className={`sidebar-link ${active === s.id ? 'active' : ''}`}
+                onClick={() => handleSelect(s.id)}
+              >
+                <span className="sidebar-icon">{ICONS[s.id]}</span>
+                {s.label}
+              </button>
+            </li>
+          );
+        })}
         {role === 'admin' && (
-          <li key="admin_users">
-            <button
-              className={`sidebar-link ${active === 'admin_users' ? 'active' : ''}`}
-              onClick={() => handleSelect('admin_users')}
-            >
-              <span className="sidebar-icon">{ICONS['admin_users']}</span>
-              Gestão de Usuários
-            </button>
-          </li>
+          <>
+            <hr className="sidebar-divider" />
+            <li key="admin_users">
+              <button
+                className={`sidebar-link ${active === 'admin_users' ? 'active' : ''}`}
+                onClick={() => handleSelect('admin_users')}
+              >
+                <span className="sidebar-icon">{ICONS['admin_users']}</span>
+                Administração de Usuários
+              </button>
+            </li>
+          </>
         )}
       </ul>
-      <div className="sidebar-footer">
-        <button onClick={toggleTheme} className="theme-toggle" style={{
-          display: 'flex', alignItems: 'center', gap: '8px', 
-          background: 'transparent', border: 'none', color: '#B9C4BA', 
-          cursor: 'pointer', padding: '10px 12px', width: '100%',
-          textAlign: 'left', fontSize: '13px', fontWeight: 500,
-          borderRadius: '8px', transition: 'background 0.15s'
-        }}>
-          {theme === 'light' ? (
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ width: 18, height: 18 }}>
-              <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
-            </svg>
-          ) : (
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ width: 18, height: 18 }}>
-              <circle cx="12" cy="12" r="5"></circle>
-              <line x1="12" y1="1" x2="12" y2="3"></line>
-              <line x1="12" y1="21" x2="12" y2="23"></line>
-              <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
-              <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
-              <line x1="1" y1="12" x2="3" y2="12"></line>
-              <line x1="21" y1="12" x2="23" y2="12"></line>
-              <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
-              <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
-            </svg>
-          )}
-          {theme === 'light' ? 'Modo Escuro' : 'Modo Claro'}
-        </button>
-        <div className="user-info" style={{ marginTop: '10px' }}>{userName}</div>
-        <button className="logout-button" onClick={() => signOut()}>Sair</button>
-      </div>
       </nav>
     </>
   );

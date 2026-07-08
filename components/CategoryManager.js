@@ -62,8 +62,10 @@ export default function CategoryManager({ categories, budgets, onCreate, onRenam
   const sortedCategories = sortCategoriesAlpha(categories);
 
   const budgetMap = {};
+  let totalBudget = 0;
   budgets.forEach((b) => {
     budgetMap[b.category] = b.monthly_amount;
+    totalBudget += Number(b.monthly_amount) || 0;
   });
 
   function handleAdd() {
@@ -136,6 +138,15 @@ export default function CategoryManager({ categories, budgets, onCreate, onRenam
               </tr>
             ))}
           </tbody>
+          <tfoot>
+            <tr>
+              <th colSpan="2" style={{ textAlign: 'right', fontSize: '12px' }}>Soma das Metas</th>
+              <th style={{ fontFamily: 'var(--font-mono), monospace', fontSize: '13px', color: 'var(--ink)' }}>
+                {totalBudget > 0 ? formatBudgetValue(totalBudget) : ''}
+              </th>
+              <th></th>
+            </tr>
+          </tfoot>
         </table>
       </div>
       <div className="row" style={{ marginTop: 12 }}>
