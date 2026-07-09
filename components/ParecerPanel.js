@@ -82,9 +82,11 @@ export default function ParecerPanel({ analysis, budgets, catColors, categories 
       </div>
       {status && <div className="hint">{status}</div>}
       {analysis.catEntries.length > 0 && (
-        <div className="chart-snapshot-source" style={{ position: 'absolute', left: -9999, top: 0, width: 300, height: 300 }} aria-hidden="true">
+        <div className="chart-snapshot-source" style={{ position: 'absolute', left: -9999, top: 0, width: 500, height: 500 }} aria-hidden="true">
           <Doughnut
             ref={snapshotChartRef}
+            width={500}
+            height={500}
             data={{
               labels: analysis.catEntries.map((c) => c.cat),
               datasets: [{
@@ -94,7 +96,11 @@ export default function ParecerPanel({ analysis, budgets, catColors, categories 
                 borderWidth: 2,
               }],
             }}
-            options={{ responsive: false, animation: false }}
+            options={{ 
+              responsive: false, 
+              animation: false,
+              plugins: { legend: { display: false } }
+            }}
           />
         </div>
       )}

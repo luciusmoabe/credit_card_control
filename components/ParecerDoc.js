@@ -106,6 +106,7 @@ export default function ParecerDoc({ a, diagnostics, recsHtml, aiGenerated, char
             ))}
           </tbody>
         </table>
+        </div>
       </div>
 
       {a.subs.length > 0 && (

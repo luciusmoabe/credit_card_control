@@ -6,20 +6,23 @@ export default function DangerZone({ txns, periods, banks, categories, onClearAl
   const [delPeriod, setDelPeriod] = useState('__all__');
   const [delBank, setDelBank] = useState('__all__');
   const [delCategory, setDelCategory] = useState('__all__');
+  const [delAccountType, setDelAccountType] = useState('__all__');
 
   // Calcular quantos seriam apagados
   const affected = txns.filter(t => {
     if (delPeriod !== '__all__' && t.period !== delPeriod) return false;
     if (delBank !== '__all__' && (t.bank || 'Não informado') !== delBank) return false;
     if (delCategory !== '__all__' && t.category !== delCategory) return false;
+    if (delAccountType !== '__all__' && (t.account_type || 'credit_card') !== delAccountType) return false;
     return true;
   });
-  
+
   const txnCount = affected.length;
 
   if (!txns.length) return null;
 
-  const scopeLabel = `do período ${delPeriod === '__all__' ? 'completo' : delPeriod} (${delBank === '__all__' ? 'todos os bancos' : delBank}${delCategory === '__all__' ? '' : `, ${delCategory}`})`;
+  const accountTypeLabel = delAccountType === '__all__' ? '' : delAccountType === 'checking_account' ? ', Conta-Corrente' : ', Cartão de Crédito';
+  const scopeLabel = `do período ${delPeriod === '__all__' ? 'completo' : delPeriod} (${delBank === '__all__' ? 'todos os bancos' : delBank}${delCategory === '__all__' ? '' : `, ${delCategory}`}${accountTypeLabel})`;
 
   function handleConfirm() {
     if (!txnCount) {
@@ -27,7 +30,7 @@ export default function DangerZone({ txns, periods, banks, categories, onClearAl
       return;
     }
     if (window.confirm(`Tem certeza que deseja apagar permanentemente ${txnCount} lançamento(s) ${scopeLabel}?\nCategorias e metas continuarão intactas.\n\nEssa ação não pode ser desfeita.`)) {
-      onClearAll(delPeriod, delBank, delCategory);
+      onClearAll(delPeriod, delBank, delCategory, delAccountType);
     }
   }
 
@@ -47,6 +50,12 @@ export default function DangerZone({ txns, periods, banks, categories, onClearAl
         <select value={delBank} onChange={e => setDelBank(e.target.value)} style={{ flex: 1, minWidth: '140px' }}>
           <option value="__all__">Todos os bancos</option>
           {banks.map(b => <option key={b} value={b}>{b}</option>)}
+        </select>
+
+        <select value={delAccountType} onChange={e => setDelAccountType(e.target.value)} style={{ flex: 1, minWidth: '140px' }}>
+          <option value="__all__">Todos os tipos de conta</option>
+          <option value="credit_card">💳 Cartão de Crédito</option>
+          <option value="checking_account">🏦 Conta-Corrente</option>
         </select>
 
         <select value={delCategory} onChange={e => setDelCategory(e.target.value)} style={{ flex: 1, minWidth: '140px' }}>

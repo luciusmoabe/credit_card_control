@@ -185,10 +185,11 @@ export default function Home() {
     }
 
     try {
-      await createTransactions(newOnes);
+      const { transactions: savedOnes, skipped: serverSkipped } = await createTransactions(newOnes);
+      const totalSkipped = duplicateCount + serverSkipped;
       setParseFeedback(
-        `Importado: ${newOnes.length} lançamento(s) novo(s) no período ${period} (${bank}).` +
-          (duplicateCount ? ` ${duplicateCount} já existiam e foram ignorados (para não duplicar).` : ''),
+        `Importado: ${savedOnes.length} lançamento(s) novo(s) no período ${period} (${bank}).` +
+          (totalSkipped ? ` ${totalSkipped} já existiam e foram ignorados (para não duplicar).` : ''),
       );
       setImportText('');
       setStaging([]);
@@ -243,9 +244,9 @@ export default function Home() {
     }
   }
 
-  async function handleClearAll(delPeriod, delBank, delCategory) {
+  async function handleClearAll(delPeriod, delBank, delCategory, delAccountType) {
     try {
-      await deleteAllTransactions(delPeriod, delBank, delCategory);
+      await deleteAllTransactions(delPeriod, delBank, delCategory, delAccountType);
       await loadData();
     } catch (e) {
       setError('Não foi possível excluir os lançamentos: ' + e.message);
