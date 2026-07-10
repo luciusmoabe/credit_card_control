@@ -1,15 +1,21 @@
+'use client';
+
 import { Doughnut } from 'react-chartjs-2';
 import 'chart.js/auto';
 import { fmt } from '@/lib/finance';
+import { useChartTheme, getChartPalette } from '@/lib/chartTheme';
 
 export default function AccountTypeChart({ analysis }) {
+  const theme = useChartTheme();
+  const palette = getChartPalette(theme);
+
   if (analysis.totalSpend === 0) return null;
 
   const data = {
     labels: ['Cartão de Crédito', 'Conta-Corrente'],
     datasets: [{
       data: [analysis.totalCreditCard, analysis.totalChecking],
-      backgroundColor: ['#378ADD', '#6B8E23'],
+      backgroundColor: [palette.creditCard, palette.checking],
       borderWidth: 2,
       borderColor: 'transparent',
     }],

@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react';
 import { sortCategoriesAlpha, CATEGORY_PALETTE, normalizeValue } from '@/lib/finance';
+import Modal from '@/components/Modal';
 
 function ColorSwatchPicker({ value, disabled, onChange }) {
   const [open, setOpen] = useState(false);
@@ -59,6 +60,7 @@ function formatBudgetValue(v) {
 export default function CategoryManager({ categories, budgets, onCreate, onRename, onRecolor, onDelete, onSetBudget, onClearBudget }) {
   const [newName, setNewName] = useState('');
   const [newColor, setNewColor] = useState(CATEGORY_PALETTE[0]);
+  const [isAdding, setIsAdding] = useState(false);
   const sortedCategories = sortCategoriesAlpha(categories);
 
   const budgetMap = {};
@@ -73,6 +75,8 @@ export default function CategoryManager({ categories, budgets, onCreate, onRenam
     if (!name) return;
     onCreate(name, newColor);
     setNewName('');
+    setNewColor(CATEGORY_PALETTE[0]);
+    setIsAdding(false);
   }
 
   function commitBudget(catName, rawValue) {
@@ -88,7 +92,10 @@ export default function CategoryManager({ categories, budgets, onCreate, onRenam
   return (
     <div className="panel">
       <h2>
-        Categorias e metas <span className="sub">personalize categorias e defina um teto mensal por categoria</span>
+        <span>
+          Categorias e metas <span className="sub">personalize categorias e defina um teto mensal por categoria</span>
+        </span>
+        <button className="ghost" onClick={() => setIsAdding(true)}>+ Nova categoria</button>
       </h2>
       <div className="scroll-x">
         <table>
@@ -149,21 +156,28 @@ export default function CategoryManager({ categories, budgets, onCreate, onRenam
           </tfoot>
         </table>
       </div>
-      <div className="row" style={{ marginTop: 12 }}>
-        <ColorSwatchPicker value={newColor} onChange={setNewColor} />
-        <input
-          type="text"
-          placeholder="Nova categoria"
-          style={{ width: 200 }}
-          value={newName}
-          onChange={(e) => setNewName(e.target.value)}
-        />
-        <button className="ghost" onClick={handleAdd}>Adicionar categoria</button>
-      </div>
       <p className="hint">
         &quot;Pagamento Fatura&quot; e &quot;Outros&quot; são categorias fixas do sistema (não podem ser renomeadas
         ou excluídas). Excluir uma categoria move os lançamentos dela para &quot;Outros&quot;.
       </p>
+
+      <Modal open={isAdding} onClose={() => setIsAdding(false)} eyebrow="Categorias" title="Nova categoria">
+        <div className="row" style={{ marginBottom: 18 }}>
+          <ColorSwatchPicker value={newColor} onChange={setNewColor} />
+          <input
+            type="text"
+            placeholder="Nome da categoria"
+            style={{ flex: 1 }}
+            value={newName}
+            onChange={(e) => setNewName(e.target.value)}
+            autoFocus
+          />
+        </div>
+        <div className="row" style={{ justifyContent: 'flex-end' }}>
+          <button type="button" className="btn-text" onClick={() => setIsAdding(false)}>Cancelar</button>
+          <button onClick={handleAdd}>Adicionar categoria</button>
+        </div>
+      </Modal>
     </div>
   );
 }

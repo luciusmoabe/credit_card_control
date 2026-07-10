@@ -13,9 +13,6 @@ export default function Ticket({ title, total, hasData }) {
           <div className="num">{hasData ? fmt(total) : '—'}</div>
         </div>
       </div>
-      <div className="perf">
-        {hasData && Array.from({ length: 40 }).map((_, i) => <span key={i} />)}
-      </div>
     </div>
   );
 }

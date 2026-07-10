@@ -1,9 +1,11 @@
 'use client';
 import { useState, useEffect } from 'react';
 import { showToast } from '@/components/Toast';
+import Modal from '@/components/Modal';
 
 export default function AdminUsers({ currentUserId }) {
   const [users, setUsers] = useState([]);
+  const [modalOpen, setModalOpen] = useState(false);
   const [editingUserId, setEditingUserId] = useState(null);
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
@@ -49,6 +51,7 @@ export default function AdminUsers({ currentUserId }) {
       
       showToast(`Usuário ${isEditing ? 'atualizado' : 'criado'} com sucesso!`, 'success');
       resetForm();
+      setModalOpen(false);
       loadUsers();
     } catch (e) {
       showToast(e.message, 'error');
@@ -85,6 +88,7 @@ export default function AdminUsers({ currentUserId }) {
     setRole(u.role);
     setActive(u.active !== false); // Default to true if undefined
     setPassword(''); // don't load password
+    setModalOpen(true);
   }
 
   function resetForm() {
@@ -98,94 +102,91 @@ export default function AdminUsers({ currentUserId }) {
 
   return (
     <div className="panel">
-      <h2>Gestão de Usuários</h2>
-      <p style={{ marginBottom: '2rem' }}>Apenas administradores podem ver esta tela e cadastrar novos acessos.</p>
-      
-      <div style={{ display: 'flex', gap: '2rem' }}>
-        <div style={{ flex: 1 }}>
-          <h3>Usuários Cadastrados</h3>
-          <div className="scroll-x">
-          <table style={{ width: '100%', borderCollapse: 'collapse', marginTop: '1rem' }}>
-            <thead>
-              <tr style={{ borderBottom: '1px solid var(--border)', textAlign: 'left' }}>
-                <th style={{ padding: '0.5rem' }}>Nome</th>
-                <th style={{ padding: '0.5rem' }}>E-mail</th>
-                <th style={{ padding: '0.5rem' }}>Perfil</th>
-                <th style={{ padding: '0.5rem' }}>Status</th>
-                <th style={{ padding: '0.5rem', textAlign: 'right' }}>Ações</th>
-              </tr>
-            </thead>
-            <tbody>
-              {users.map(u => (
-                <tr key={u.id} style={{ borderBottom: '1px solid var(--border)' }}>
-                  <td style={{ padding: '0.5rem' }}>{u.name}</td>
-                  <td style={{ padding: '0.5rem' }}>{u.email}</td>
-                  <td style={{ padding: '0.5rem' }}>
-                    <span style={{ padding: '0.2rem 0.5rem', background: u.role === 'admin' ? 'var(--ink)' : 'var(--line)', color: u.role === 'admin' ? '#F3F1EA' : 'var(--ink)', borderRadius: '4px', fontSize: '0.8rem' }}>
-                      {u.role === 'admin' ? 'Admin' : 'Usuário'}
-                    </span>
-                  </td>
-                  <td style={{ padding: '0.5rem' }}>
-                    <span style={{ padding: '0.2rem 0.5rem', background: u.active !== false ? 'var(--teal-bg)' : 'var(--rust-bg)', color: u.active !== false ? 'var(--teal)' : 'var(--rust)', borderRadius: '4px', fontSize: '0.8rem' }}>
-                      {u.active !== false ? 'Ativo' : 'Inativo'}
-                    </span>
-                  </td>
-                  <td style={{ padding: '0.5rem', textAlign: 'right' }}>
-                    <button className="ghost" style={{ padding: '4px 8px', fontSize: '0.8rem', marginRight: '4px' }} onClick={() => handleEdit(u)}>Editar</button>
-                    <button className="danger" style={{ padding: '4px 8px', fontSize: '0.8rem' }} onClick={() => handleDelete(u.id, u.name)} disabled={u.id === currentUserId}>Excluir</button>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-        </div>
+      <h2>
+        <span>Gestão de Usuários</span>
+        <button className="ghost" onClick={() => { resetForm(); setModalOpen(true); }}>+ Novo usuário</button>
+      </h2>
+      <p className="hint" style={{ marginTop: 0 }}>Apenas administradores podem ver esta tela e cadastrar novos acessos.</p>
 
-        <div style={{ width: '350px', background: 'var(--paper)', padding: '1.5rem', borderRadius: '8px', border: '1px solid var(--line)' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <h3>{editingUserId ? 'Editar Usuário' : 'Novo Usuário'}</h3>
-            {editingUserId && (
-              <button className="ghost" style={{ padding: '4px 8px', fontSize: '0.8rem' }} onClick={resetForm}>Cancelar</button>
-            )}
+      <div className="scroll-x">
+        <table>
+          <thead>
+            <tr>
+              <th>Nome</th>
+              <th>E-mail</th>
+              <th>Perfil</th>
+              <th>Status</th>
+              <th style={{ textAlign: 'right' }}>Ações</th>
+            </tr>
+          </thead>
+          <tbody>
+            {users.map(u => (
+              <tr key={u.id}>
+                <td>{u.name}</td>
+                <td>{u.email}</td>
+                <td>
+                  <span style={{ padding: '0.2rem 0.5rem', background: u.role === 'admin' ? 'var(--ink)' : 'var(--line)', color: u.role === 'admin' ? '#F3F1EA' : 'var(--ink)', borderRadius: '4px', fontSize: '0.8rem' }}>
+                    {u.role === 'admin' ? 'Admin' : 'Usuário'}
+                  </span>
+                </td>
+                <td>
+                  <span style={{ padding: '0.2rem 0.5rem', background: u.active !== false ? 'var(--teal-bg)' : 'var(--rust-bg)', color: u.active !== false ? 'var(--teal)' : 'var(--rust)', borderRadius: '4px', fontSize: '0.8rem' }}>
+                    {u.active !== false ? 'Ativo' : 'Inativo'}
+                  </span>
+                </td>
+                <td style={{ textAlign: 'right' }}>
+                  <button className="ghost" style={{ padding: '4px 8px', fontSize: '0.8rem', marginRight: '4px' }} onClick={() => handleEdit(u)}>Editar</button>
+                  <button className="danger" style={{ padding: '4px 8px', fontSize: '0.8rem' }} onClick={() => handleDelete(u.id, u.name)} disabled={u.id === currentUserId}>Excluir</button>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+
+      <Modal
+        open={modalOpen}
+        onClose={() => { resetForm(); setModalOpen(false); }}
+        eyebrow="Administração"
+        title={editingUserId ? 'Editar usuário' : 'Novo usuário'}
+      >
+        <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+          <div className="field">
+            <label>Nome</label>
+            <input value={name} onChange={e => setName(e.target.value)} required />
           </div>
-          
-          <form onSubmit={handleSubmit} style={{ marginTop: '1rem', display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-            <div>
-              <label style={{ display: 'block', fontSize: '0.9rem', marginBottom: '0.25rem' }}>Nome</label>
-              <input value={name} onChange={e => setName(e.target.value)} required style={{ width: '100%' }} />
-            </div>
-            <div>
-              <label style={{ display: 'block', fontSize: '0.9rem', marginBottom: '0.25rem' }}>E-mail</label>
-              <input type="email" value={email} onChange={e => setEmail(e.target.value)} required style={{ width: '100%' }} />
-            </div>
-            <div>
-              <label style={{ display: 'block', fontSize: '0.9rem', marginBottom: '0.25rem' }}>
-                {editingUserId ? 'Nova Senha (deixe em branco para manter)' : 'Senha provisória'}
-              </label>
-              <input type="password" value={password} onChange={e => setPassword(e.target.value)} required={!editingUserId} style={{ width: '100%' }} />
-            </div>
-            <div>
-              <label style={{ display: 'block', fontSize: '0.9rem', marginBottom: '0.25rem' }}>Perfil</label>
-              <select value={role} onChange={e => setRole(e.target.value)} style={{ width: '100%' }}>
-                <option value="user">Usuário Comum</option>
-                <option value="admin">Administrador</option>
+          <div className="field">
+            <label>E-mail</label>
+            <input type="email" value={email} onChange={e => setEmail(e.target.value)} required />
+          </div>
+          <div className="field">
+            <label>{editingUserId ? 'Nova Senha (deixe em branco para manter)' : 'Senha provisória'}</label>
+            <input type="password" value={password} onChange={e => setPassword(e.target.value)} required={!editingUserId} />
+          </div>
+          <div className="field">
+            <label>Perfil</label>
+            <select value={role} onChange={e => setRole(e.target.value)}>
+              <option value="user">Usuário Comum</option>
+              <option value="admin">Administrador</option>
+            </select>
+          </div>
+          {editingUserId && (
+            <div className="field">
+              <label>Status</label>
+              <select value={active ? 'true' : 'false'} onChange={e => setActive(e.target.value === 'true')}>
+                <option value="true">Ativo (Pode fazer login)</option>
+                <option value="false">Inativo (Acesso bloqueado)</option>
               </select>
             </div>
-            {editingUserId && (
-              <div>
-                <label style={{ display: 'block', fontSize: '0.9rem', marginBottom: '0.25rem' }}>Status</label>
-                <select value={active ? 'true' : 'false'} onChange={e => setActive(e.target.value === 'true')} style={{ width: '100%' }}>
-                  <option value="true">Ativo (Pode fazer login)</option>
-                  <option value="false">Inativo (Acesso bloqueado)</option>
-                </select>
-              </div>
-            )}
-            <button disabled={loading} style={{ marginTop: '0.5rem' }}>
+          )}
+          <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 8, marginTop: '0.5rem' }}>
+            <button type="button" className="btn-text" onClick={() => { resetForm(); setModalOpen(false); }}>Cancelar</button>
+            <button disabled={loading}>
               {loading ? 'Salvando...' : (editingUserId ? 'Salvar Alterações' : 'Cadastrar')}
             </button>
-          </form>
-        </div>
-      </div>
+          </div>
+        </form>
+      </Modal>
     </div>
   );
 }
