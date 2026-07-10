@@ -52,6 +52,12 @@ const ICONS = {
       <line x1="8.5" y1="15.5" x2="16" y2="15.5" />
     </svg>
   ),
+  income: (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M3 17l6-6 4 4 8-8" />
+      <path d="M15 7h6v6" />
+    </svg>
+  ),
   admin_users: (
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
       <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
@@ -73,6 +79,7 @@ export const SECTIONS = [
   { type: 'divider' },
   { id: 'categories', label: 'Categorias & Metas' },
   { id: 'import', label: 'Importação de Dados' },
+  { id: 'income', label: 'Renda' },
   { type: 'divider' },
   { id: 'transactions', label: 'Lançamentos' },
   { id: 'commitments', label: 'Parcelamentos' },

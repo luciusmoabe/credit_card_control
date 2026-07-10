@@ -20,6 +20,7 @@ import AdminUsers from '@/components/AdminUsers';
 import ChangePassword from '@/components/ChangePassword';
 import AccountTypeChart from '@/components/AccountTypeChart';
 import ManualEntry from '@/components/ManualEntry';
+import PayslipImportPanel from '@/components/PayslipImportPanel';
 import {
   getTransactions,
   getOverrides,
@@ -35,12 +36,16 @@ import {
   getBudgets,
   upsertBudget,
   deleteBudget,
+  getIncome,
+  upsertIncome,
+  deleteIncome,
 } from '@/lib/api';
 import {
   parseLines,
   periodsSorted,
   banksSorted,
   computeAnalysis,
+  computeIncomeCommitment,
   buildTicketTitle,
   buildParcelamentos,
   dedupeTransactions,
@@ -62,6 +67,7 @@ export default function Home() {
   const [overrides, setOverrides] = useState({});
   const [categories, setCategories] = useState(DEFAULT_CATEGORIES);
   const [budgets, setBudgets] = useState([]);
+  const [income, setIncome] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
@@ -87,11 +93,12 @@ export default function Home() {
     setLoading(true);
     setError('');
     try {
-      const [txRes, ovRes, catRes, budgetRes] = await Promise.all([
+      const [txRes, ovRes, catRes, budgetRes, incomeRes] = await Promise.all([
         getTransactions(),
         getOverrides(),
         getCategories(),
         getBudgets(),
+        getIncome(),
       ]);
       setTxns(txRes);
       const map = {};
@@ -103,6 +110,7 @@ export default function Home() {
       const missingSys = systemCats.filter(sc => !catRes.some(c => c.name === sc.name));
       setCategories([...catRes, ...missingSys.map(c => ({ ...c, is_system: true }))]);
       setBudgets(budgetRes);
+      setIncome(incomeRes);
     } catch (e) {
       setError('Não foi possível carregar os dados: ' + e.message);
     } finally {
@@ -126,6 +134,22 @@ export default function Home() {
     () => computeAnalysis({ txns, selPeriod: effectiveFilterPeriod, selBank: effectiveFilterBank, selAccountType: filterAccountType }),
     [txns, effectiveFilterPeriod, effectiveFilterBank, filterAccountType],
   );
+
+  // O contracheque de um mês M (ex. "2026-06") é recebido no fim de M e paga
+  // as despesas de M+1 ("2026-07") — por isso a renda que financia o que
+  // "nextCommitted" já compromete (parcelas do mês seguinte ao anchorPeriod)
+  // é o contracheque cujo PRÓPRIO período é o anchorPeriod, não um período
+  // deslocado pra frente. Quando não há contracheque importado pra esse
+  // período, cai para a estimativa automática (analysis.totalIncome, a
+  // partir de créditos detectados no extrato da conta corrente) — menos
+  // precisa, mas melhor que não mostrar nada.
+  const fundingIncome = income.find((i) => i.period === analysis.anchorPeriod) || null;
+  const netIncomeValue = fundingIncome ? fundingIncome.net_income : (analysis.totalIncome > 0 ? analysis.totalIncome : null);
+  const incomeSource = fundingIncome ? 'payslip' : (netIncomeValue ? 'estimate' : null);
+  const incomeCommitment = useMemo(() => {
+    const c = computeIncomeCommitment(analysis, netIncomeValue);
+    return c ? { ...c, source: incomeSource } : null;
+  }, [analysis, netIncomeValue, incomeSource]);
 
   const ticketTitle = useMemo(
     () => buildTicketTitle(analysis.scoped, effectiveFilterPeriod, effectiveFilterBank),
@@ -206,6 +230,16 @@ export default function Home() {
     } catch (e) {
       throw new Error('Erro ao salvar o lançamento: ' + e.message);
     }
+  }
+
+  async function handleSaveIncome(record) {
+    await upsertIncome(record);
+    await loadData();
+  }
+
+  async function handleDeleteIncome(period) {
+    await deleteIncome(period);
+    await loadData();
   }
 
   async function handleCategoryChange(txn, category) {
@@ -346,6 +380,10 @@ export default function Home() {
       );
     }
 
+    if (activeSection === 'income') {
+      return <PayslipImportPanel income={income} onSave={handleSaveIncome} onDelete={handleDeleteIncome} />;
+    }
+
     if (activeSection === 'categories') {
       return (
         <>
@@ -432,7 +470,7 @@ export default function Home() {
     // overview
     return (
       <>
-        <KpiGrid analysis={analysis} />
+        <KpiGrid analysis={analysis} incomeCommitment={incomeCommitment} />
         <BudgetProgress catEntries={analysis.catEntries} budgets={budgets} nMonths={analysis.nMonths} catColors={catColors} />
         <div className="charts">
           <AccountTypeChart analysis={analysis} />
@@ -463,7 +501,7 @@ export default function Home() {
           onFilterBankChange={setFilterBank}
           filterAccountType={filterAccountType}
           onFilterAccountTypeChange={setFilterAccountType}
-          showFilters={!['admin_users', 'my_account', 'categories', 'import'].includes(activeSection)}
+          showFilters={!['admin_users', 'my_account', 'categories', 'import', 'income'].includes(activeSection)}
           userName={session?.user?.name}
           onProfileClick={() => setActiveSection('my_account')}
         />

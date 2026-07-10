@@ -1,6 +1,6 @@
-import { fmt } from '@/lib/finance';
+import { fmt, fmtPct } from '@/lib/finance';
 
-export default function KpiGrid({ analysis }) {
+export default function KpiGrid({ analysis, incomeCommitment }) {
   const topCat = analysis.catEntries[0];
 
   return (
@@ -44,6 +44,21 @@ export default function KpiGrid({ analysis }) {
           <div className="lbl">Compromisso futuro (parcelas)</div>
           <div className="val">{fmt(analysis.futureTotal)}</div>
           <div className="note">{analysis.parcRows?.length || 0} parcelamentos ativos</div>
+        </div>
+
+        <div className={`kpi${incomeCommitment?.overCommitted ? ' warn' : ''}`}>
+          <div className="lbl">Renda já comprometida (próx. mês)</div>
+          {incomeCommitment ? (
+            <>
+              <div className="val">{fmtPct(incomeCommitment.pctNextCommitted)}</div>
+              <div className="note">
+                {fmt(incomeCommitment.nextCommitted)} de {fmt(incomeCommitment.netIncome)}
+                {incomeCommitment.source === 'estimate' ? ' (estimado pelo extrato)' : ''}
+              </div>
+            </>
+          ) : (
+            <div className="note">Importe seu contracheque para ver este indicador</div>
+          )}
         </div>
       </div>
       {analysis.totalSpend > 0 && (
