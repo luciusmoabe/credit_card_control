@@ -1,6 +1,6 @@
 'use client';
 
-import { fmt } from '@/lib/finance';
+import { fmt, fmtPct } from '@/lib/finance';
 import { useChartTheme, getChartPalette } from '@/lib/chartTheme';
 
 const ICON_WALLET = (
@@ -30,8 +30,16 @@ const ICON_ALERT = (
     <circle cx="12" cy="17" r="0.6" fill="currentColor" />
   </svg>
 );
+const ICON_INCOME = (
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
+    <circle cx="9" cy="7" r="4" />
+    <path d="M22 21v-2a4 4 0 0 0-3-3.87" />
+    <path d="M16 3.13a4 4 0 0 1 0 7.75" />
+  </svg>
+);
 
-export default function KpiGrid({ analysis }) {
+export default function KpiGrid({ analysis, incomeCommitment }) {
   const topCat = analysis.catEntries[0];
   const trendUp = analysis.spendDiffPct > 0;
   const theme = useChartTheme();
@@ -49,30 +57,6 @@ export default function KpiGrid({ analysis }) {
             <span className={`kpi-trend ${trendUp ? 'down' : 'up'}`}>
               {trendUp ? '▲' : '▼'} {Math.abs(analysis.spendDiffPct).toFixed(1)}% vs. mês anterior
             </span>
-          )}
-        </div>
-
-        <div className="kpi">
-          <span className="kpi-icon">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
-              <circle cx="9" cy="7" r="4" />
-              <path d="M22 21v-2a4 4 0 0 0-3-3.87" />
-              <path d="M16 3.13a4 4 0 0 1 0 7.75" />
-            </svg>
-          </span>
-          <div className="lbl">Renda já comprometida (próx. mês)</div>
-          {analysis.totalIncome > 0 ? (
-            <>
-              <div className="val">
-                {((analysis.nextCommitted / analysis.totalIncome) * 100).toFixed(1).replace('.', ',')}%
-              </div>
-              <div className="note">Renda base: {fmt(analysis.totalIncome)}</div>
-            </>
-          ) : (
-            <div className="note" style={{ marginTop: 8 }}>
-              Importe seu contracheque para ver este indicador
-            </div>
           )}
         </div>
 
@@ -106,6 +90,22 @@ export default function KpiGrid({ analysis }) {
           <div className="lbl">Compromisso futuro (parcelas)</div>
           <div className="val">{fmt(analysis.futureTotal)}</div>
           <div className="note">{analysis.parcRows?.length || 0} parcelamentos ativos</div>
+        </div>
+
+        <div className={`kpi${incomeCommitment?.overCommitted ? ' warn' : ''}`}>
+          <span className="kpi-icon">{ICON_INCOME}</span>
+          <div className="lbl">Renda já comprometida (próx. mês)</div>
+          {incomeCommitment ? (
+            <>
+              <div className="val">{fmtPct(incomeCommitment.pctNextCommitted)}</div>
+              <div className="note">
+                {fmt(incomeCommitment.nextCommitted)} de {fmt(incomeCommitment.netIncome)}
+                {incomeCommitment.source === 'estimate' ? ' (estimado pelo extrato)' : ''}
+              </div>
+            </>
+          ) : (
+            <div className="note">Importe seu contracheque para ver este indicador</div>
+          )}
         </div>
       </div>
       {analysis.totalSpend > 0 && (
