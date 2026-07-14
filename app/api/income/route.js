@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { sql } from '@/lib/db';
+import { sqlAsUser } from '@/lib/db';
 import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/lib/auth';
 
@@ -7,6 +7,7 @@ export async function GET(request) {
   const session = await getServerSession(authOptions);
   if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   const userId = session.user.id;
+  const sql = sqlAsUser(userId);
 
   const rows = await sql`
     SELECT user_id, period, gross_income, deductions, net_income, created_at
@@ -21,6 +22,7 @@ export async function POST(request) {
   const session = await getServerSession(authOptions);
   if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   const userId = session.user.id;
+  const sql = sqlAsUser(userId);
   const body = await request.json();
   const { period, gross_income, deductions, net_income } = body;
 
@@ -47,6 +49,7 @@ export async function DELETE(request) {
   const session = await getServerSession(authOptions);
   if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   const userId = session.user.id;
+  const sql = sqlAsUser(userId);
   const body = await request.json();
   const { period } = body;
 

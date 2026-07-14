@@ -4,12 +4,21 @@ import 'chart.js/auto';
 import { useRef, useState } from 'react';
 import { Doughnut } from 'react-chartjs-2';
 import ParecerDoc from './ParecerDoc';
-import { buildDiagnostics, buildBudgetDiagnostics, buildFallbackRecommendations, buildRecommendationsHtml, buildAiPayload, FALLBACK_CATEGORY_COLOR } from '@/lib/finance';
+import {
+  buildDiagnostics,
+  buildBudgetDiagnostics,
+  buildIncomeDiagnostics,
+  buildInvestmentPlan,
+  buildFallbackRecommendations,
+  buildRecommendationsHtml,
+  buildAiPayload,
+  FALLBACK_CATEGORY_COLOR,
+} from '@/lib/finance';
 
 // Renders its own (visually hidden) donut chart instead of reusing the one on
 // the Visão Geral section — that panel may not be mounted when the parecer
 // is generated, since sections unmount when you navigate away from them.
-export default function ParecerPanel({ analysis, budgets, catColors, categories }) {
+export default function ParecerPanel({ analysis, budgets, catColors, categories, expenseVsIncome, incomeCommitment }) {
   const [doc, setDoc] = useState(null);
   const [status, setStatus] = useState('');
   const [generating, setGenerating] = useState(false);
@@ -22,8 +31,14 @@ export default function ParecerPanel({ analysis, budgets, catColors, categories 
     }
 
     setGenerating(true);
-    const diagnostics = buildDiagnostics(analysis).concat(
-      buildBudgetDiagnostics(analysis.catEntries, budgets, analysis.nMonths),
+    const diagnostics = buildDiagnostics(analysis)
+      .concat(buildBudgetDiagnostics(analysis.catEntries, budgets, analysis.nMonths))
+      .concat(buildIncomeDiagnostics(expenseVsIncome, incomeCommitment));
+    const investmentPlan = buildInvestmentPlan(
+      analysis,
+      expenseVsIncome?.netIncome ?? null,
+      expenseVsIncome?.source ?? null,
+      categories,
     );
     const fallbackHtml = buildRecommendationsHtml(buildFallbackRecommendations(analysis, categories));
     let chartImage = null;
@@ -33,17 +48,17 @@ export default function ParecerPanel({ analysis, budgets, catColors, categories 
       chartImage = null;
     }
     setStatus('Analisando seus dados e gerando recomendações personalizadas...');
-    setDoc({ a: analysis, diagnostics, recsHtml: fallbackHtml, aiGenerated: false, chartImage });
+    setDoc({ a: analysis, diagnostics, recsHtml: fallbackHtml, aiGenerated: false, chartImage, expenseVsIncome, incomeCommitment, investmentPlan });
 
     try {
       const res = await fetch('/api/parecer/ai-recommendations', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(buildAiPayload(analysis)),
+        body: JSON.stringify(buildAiPayload(analysis, expenseVsIncome, incomeCommitment)),
       });
       if (!res.ok) throw new Error('IA indisponível');
       const { html } = await res.json();
-      setDoc({ a: analysis, diagnostics, recsHtml: `<div class="ai-rec">${html}</div>`, aiGenerated: true, chartImage });
+      setDoc({ a: analysis, diagnostics, recsHtml: `<div class="ai-rec">${html}</div>`, aiGenerated: true, chartImage, expenseVsIncome, incomeCommitment, investmentPlan });
       setStatus('Parecer gerado. Revise abaixo e exporte em PDF quando quiser.');
     } catch (e) {
       setStatus('Parecer gerado com recomendações padrão (análise personalizada por IA indisponível no momento).');
@@ -112,6 +127,9 @@ export default function ParecerPanel({ analysis, budgets, catColors, categories 
           aiGenerated={doc.aiGenerated}
           chartImage={doc.chartImage}
           catColors={catColors}
+          expenseVsIncome={doc.expenseVsIncome}
+          incomeCommitment={doc.incomeCommitment}
+          investmentPlan={doc.investmentPlan}
         />
       )}
     </div>

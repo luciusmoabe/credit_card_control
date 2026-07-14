@@ -46,8 +46,10 @@ import {
   banksSorted,
   computeAnalysis,
   computeIncomeCommitment,
+  computeExpenseVsIncome,
   buildTicketTitle,
   buildParcelamentos,
+  addMonths,
   dedupeTransactions,
   normDesc,
   catColorMap,
@@ -136,18 +138,25 @@ export default function Home() {
   );
 
   // O contracheque de um mês M (ex. "2026-06") é recebido no fim de M e paga
-  // as despesas de M+1 ("2026-07") — por isso a renda que financia o que
-  // "nextCommitted" já compromete (parcelas do mês seguinte ao anchorPeriod)
-  // é o contracheque cujo PRÓPRIO período é o anchorPeriod, não um período
-  // deslocado pra frente. Quando não há contracheque importado pra esse
-  // período, cai para a estimativa automática (analysis.totalIncome, a
-  // partir de créditos detectados no extrato da conta corrente) — menos
-  // precisa, mas melhor que não mostrar nada.
-  const fundingIncome = income.find((i) => i.period === analysis.anchorPeriod) || null;
+  // as despesas do mês seguinte ("2026-07") — por isso a renda que financia
+  // o período mais recente com lançamentos (anchorPeriod) é o contracheque
+  // do mês ANTERIOR a ele (anchorPeriod - 1), não do próprio anchorPeriod:
+  // se o gasto mais recente é de julho, é o contracheque de junho que já foi
+  // recebido e pagou julho — o de julho ainda nem chegou. Quando não há
+  // contracheque importado pra esse período, cai para a estimativa
+  // automática (analysis.totalIncome, a partir de créditos detectados no
+  // extrato da conta corrente) — menos precisa, mas melhor que nada.
+  const fundingPeriod = analysis.anchorPeriod ? addMonths(analysis.anchorPeriod, -1) : null;
+  const fundingIncome = income.find((i) => i.period === fundingPeriod) || null;
   const netIncomeValue = fundingIncome ? fundingIncome.net_income : (analysis.totalIncome > 0 ? analysis.totalIncome : null);
   const incomeSource = fundingIncome ? 'payslip' : (netIncomeValue ? 'estimate' : null);
   const incomeCommitment = useMemo(() => {
     const c = computeIncomeCommitment(analysis, netIncomeValue);
+    return c ? { ...c, source: incomeSource } : null;
+  }, [analysis, netIncomeValue, incomeSource]);
+
+  const expenseVsIncome = useMemo(() => {
+    const c = computeExpenseVsIncome(analysis, netIncomeValue);
     return c ? { ...c, source: incomeSource } : null;
   }, [analysis, netIncomeValue, incomeSource]);
 
@@ -445,7 +454,16 @@ export default function Home() {
     }
 
     if (activeSection === 'parecer') {
-      return <ParecerPanel analysis={analysis} budgets={budgets} catColors={catColors} categories={categories} />;
+      return (
+        <ParecerPanel
+          analysis={analysis}
+          budgets={budgets}
+          catColors={catColors}
+          categories={categories}
+          expenseVsIncome={expenseVsIncome}
+          incomeCommitment={incomeCommitment}
+        />
+      );
     }
 
     if (activeSection === 'admin_users' && session?.user?.role === 'admin') {
@@ -470,7 +488,7 @@ export default function Home() {
     // overview
     return (
       <>
-        <KpiGrid analysis={analysis} incomeCommitment={incomeCommitment} />
+        <KpiGrid analysis={analysis} incomeCommitment={incomeCommitment} expenseVsIncome={expenseVsIncome} />
         <BudgetProgress catEntries={analysis.catEntries} budgets={budgets} nMonths={analysis.nMonths} catColors={catColors} />
         <div className="charts">
           <AccountTypeChart analysis={analysis} />

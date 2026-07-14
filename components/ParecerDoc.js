@@ -1,6 +1,6 @@
 import { fmt, fmtPct, FALLBACK_CATEGORY_COLOR, buildHealthBadge } from '@/lib/finance';
 
-export default function ParecerDoc({ a, diagnostics, recsHtml, aiGenerated, chartImage, catColors }) {
+export default function ParecerDoc({ a, diagnostics, recsHtml, aiGenerated, chartImage, catColors, expenseVsIncome, incomeCommitment, investmentPlan }) {
   const now = new Date();
   const dataEmissao = now.toLocaleDateString('pt-BR') + ' às ' + now.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
   const escopo =
@@ -11,6 +11,7 @@ export default function ParecerDoc({ a, diagnostics, recsHtml, aiGenerated, char
   const maxCat = a.catEntries.length ? a.catEntries[0].val : 1;
 
   let running = 3;
+  const planSectionN = investmentPlan ? ++running : null;
   const subsSectionN = a.subs.length ? ++running : null;
   const parcSectionN = a.parcRows.length ? ++running : null;
 
@@ -50,7 +51,28 @@ export default function ParecerDoc({ a, diagnostics, recsHtml, aiGenerated, char
           <div className="doc-kpi accent-ink"><div className="lbl">Lançamentos</div><div className="val">{a.count}</div></div>
           <div className="doc-kpi accent-mustard"><div className="lbl">Assinaturas/mês</div><div className="val">{fmt(a.subsTotal / a.nMonths)}</div></div>
           <div className="doc-kpi accent-rust"><div className="lbl">Parcelas a vencer</div><div className="val">{fmt(a.futureTotal)}</div></div>
+          {expenseVsIncome && (
+            <div className="doc-kpi accent-teal">
+              <div className="lbl">Renda líquida (mês anterior){expenseVsIncome.source === 'estimate' ? ' *' : ''}</div>
+              <div className="val">{fmt(expenseVsIncome.netIncome)}</div>
+            </div>
+          )}
+          {expenseVsIncome && (
+            <div className={`doc-kpi ${expenseVsIncome.tier === 'over' ? 'accent-rust' : 'accent-teal'}`}>
+              <div className="lbl">Gasto do mês / renda</div>
+              <div className="val">{fmtPct(expenseVsIncome.pctOfIncome)}</div>
+            </div>
+          )}
+          {incomeCommitment && (
+            <div className={`doc-kpi ${incomeCommitment.overCommitted ? 'accent-rust' : 'accent-teal'}`}>
+              <div className="lbl">Renda comprometida (próx. mês)</div>
+              <div className="val">{fmtPct(incomeCommitment.pctNextCommitted)}</div>
+            </div>
+          )}
         </div>
+        {expenseVsIncome?.source === 'estimate' && (
+          <p className="hint" style={{ marginTop: 8 }}>* renda estimada a partir de créditos detectados no extrato — importe o contracheque do mês para um valor exato.</p>
+        )}
       </div>
 
       <div className="parecer-section">
@@ -108,6 +130,69 @@ export default function ParecerDoc({ a, diagnostics, recsHtml, aiGenerated, char
         </table>
         </div>
       </div>
+
+      {investmentPlan && (
+        <div className="parecer-section">
+          <h3><span className="n">{planSectionN}</span> Plano de redistribuição para investir mais</h3>
+          <p>
+            Com a renda líquida de <strong>{fmt(investmentPlan.netIncome)}</strong>
+            {investmentPlan.source === 'estimate' ? ' (estimada pelo extrato)' : ''} e o gasto de {fmt(investmentPlan.totalSpend)} neste período,
+            {investmentPlan.currentSurplus >= 0
+              ? <> hoje sobram <strong>{fmt(investmentPlan.currentSurplus)}</strong> por mês.</>
+              : <> o gasto já ficou {fmt(Math.abs(investmentPlan.currentSurplus))} acima da renda.</>}
+            {' '}A meta sugerida (regra 50-30-20) é investir {fmtPct(investmentPlan.targetInvestRate * 100)} da renda —{' '}
+            <strong>{fmt(investmentPlan.targetInvestAmount)}/mês</strong>.
+          </p>
+          {investmentPlan.cuts.length > 0 ? (
+            <>
+              <div className="scroll-x">
+                <table>
+                  <thead>
+                    <tr>
+                      <th>Categoria</th>
+                      <th style={{ textAlign: 'right' }}>Gasto atual/mês</th>
+                      <th style={{ textAlign: 'right' }}>Corte sugerido</th>
+                      <th style={{ textAlign: 'right' }}>Novo teto/mês</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {investmentPlan.cuts.map((c) => (
+                      <tr key={c.cat}>
+                        <td>
+                          <div className="cat-name">
+                            <span className="cat-swatch" style={{ background: catColors[c.cat] || FALLBACK_CATEGORY_COLOR }} />
+                            {c.cat}
+                          </div>
+                        </td>
+                        <td className="mono" style={{ textAlign: 'right' }}>{fmt(c.monthly)}</td>
+                        <td className="mono" style={{ textAlign: 'right' }}>-{fmt(c.cut)}</td>
+                        <td className="mono" style={{ textAlign: 'right' }}>{fmt(c.newMonthly)}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+              <p>
+                Aplicando esses cortes (até 15% por categoria, começando pelas maiores), dá para chegar a{' '}
+                <strong>{fmt(investmentPlan.achievedInvestAmount)}/mês</strong> disponíveis para investir
+                {investmentPlan.achievesTarget
+                  ? ', batendo a meta de 20% da renda.'
+                  : `, ainda ${fmt(investmentPlan.targetInvestAmount - investmentPlan.achievedInvestAmount)} abaixo da meta — considere metas de gasto mais rígidas nessas categorias ou uma fonte extra de renda.`}
+              </p>
+            </>
+          ) : investmentPlan.achievesTarget ? (
+            <p>
+              Boas notícias: a sobra atual de <strong>{fmt(investmentPlan.currentSurplus)}/mês</strong> já bate ou supera a meta de{' '}
+              {fmtPct(investmentPlan.targetInvestRate * 100)} da renda ({fmt(investmentPlan.targetInvestAmount)}/mês) — nenhum corte de categoria é necessário. Direcione esse valor para investimentos.
+            </p>
+          ) : (
+            <p>
+              Não há corte relevante possível nas categorias atuais para fechar a meta de investimento — considere renegociar despesas fixas
+              (aluguel, financiamentos) ou buscar uma fonte extra de renda.
+            </p>
+          )}
+        </div>
+      )}
 
       {a.subs.length > 0 && (
         <div className="parecer-section">

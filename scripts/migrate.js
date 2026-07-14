@@ -54,6 +54,31 @@ async function main() {
     `;
     console.log('Table income created or already exists.');
 
+    // Row-Level Security como camada extra de defesa: mesmo que uma rota
+    // futura esqueça o WHERE user_id = ..., a política do banco barra o
+    // vazamento (consulta sem set_config('app.current_user_id', ...) na
+    // mesma transação retorna vazio, nunca dado de outro usuário). FORCE é
+    // o que faz a política valer mesmo para o dono da tabela (o papel usado
+    // pela própria DATABASE_URL do app) -- sem isso, RLS não protegeria nada.
+    await sql`
+      DO $$
+      DECLARE
+        tbl TEXT;
+      BEGIN
+        FOREACH tbl IN ARRAY ARRAY['transactions','categories','category_budgets','category_overrides','income','period_meta']
+        LOOP
+          EXECUTE format('ALTER TABLE %I ENABLE ROW LEVEL SECURITY', tbl);
+          EXECUTE format('ALTER TABLE %I FORCE ROW LEVEL SECURITY', tbl);
+          EXECUTE format('DROP POLICY IF EXISTS user_isolation ON %I', tbl);
+          EXECUTE format(
+            'CREATE POLICY user_isolation ON %I USING (user_id = current_setting(''app.current_user_id'', true))',
+            tbl
+          );
+        END LOOP;
+      END $$;
+    `;
+    console.log('Row-Level Security habilitada em transactions/categories/category_budgets/category_overrides/income/period_meta.');
+
     console.log('Migration successful.');
   } catch (err) {
     console.error('Migration failed:', err);
