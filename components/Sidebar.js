@@ -58,6 +58,15 @@ const ICONS = {
       <path d="M15 7h6v6" />
     </svg>
   ),
+  action_plan: (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+      <rect x="4" y="3" width="16" height="18" rx="1.5" />
+      <path d="M8 8.5l1.5 1.5 3-3" />
+      <line x1="14" y1="9" x2="16.5" y2="9" />
+      <path d="M8 15.5l1.5 1.5 3-3" />
+      <line x1="14" y1="16" x2="16.5" y2="16" />
+    </svg>
+  ),
   admin_users: (
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
       <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
@@ -86,6 +95,7 @@ export const SECTIONS = [
   { id: 'subscriptions', label: 'Assinaturas' },
   { type: 'divider' },
   { id: 'parecer', label: 'Parecer do Especialista' },
+  { id: 'action_plan', label: 'Plano de Ação' },
 ];
 
 import { useState } from 'react';
