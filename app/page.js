@@ -21,6 +21,7 @@ import ChangePassword from '@/components/ChangePassword';
 import AccountTypeChart from '@/components/AccountTypeChart';
 import ManualEntry from '@/components/ManualEntry';
 import PayslipImportPanel from '@/components/PayslipImportPanel';
+import ActionPlan from '@/components/ActionPlan';
 import {
   getTransactions,
   getOverrides,
@@ -39,6 +40,10 @@ import {
   getIncome,
   upsertIncome,
   deleteIncome,
+  getActionItems,
+  createActionItem,
+  updateActionItem,
+  deleteActionItem,
 } from '@/lib/api';
 import {
   parseLines,
@@ -70,6 +75,7 @@ export default function Home() {
   const [categories, setCategories] = useState(DEFAULT_CATEGORIES);
   const [budgets, setBudgets] = useState([]);
   const [income, setIncome] = useState([]);
+  const [actionItems, setActionItems] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
@@ -95,12 +101,13 @@ export default function Home() {
     setLoading(true);
     setError('');
     try {
-      const [txRes, ovRes, catRes, budgetRes, incomeRes] = await Promise.all([
+      const [txRes, ovRes, catRes, budgetRes, incomeRes, actionItemsRes] = await Promise.all([
         getTransactions(),
         getOverrides(),
         getCategories(),
         getBudgets(),
         getIncome(),
+        getActionItems(),
       ]);
       setTxns(txRes);
       const map = {};
@@ -113,6 +120,7 @@ export default function Home() {
       setCategories([...catRes, ...missingSys.map(c => ({ ...c, is_system: true }))]);
       setBudgets(budgetRes);
       setIncome(incomeRes);
+      setActionItems(actionItemsRes);
     } catch (e) {
       setError('Não foi possível carregar os dados: ' + e.message);
     } finally {
@@ -351,6 +359,34 @@ export default function Home() {
     }
   }
 
+  async function handleCreateActionItem(item) {
+    try {
+      await createActionItem(item);
+      await loadData();
+    } catch (e) {
+      setError('Não foi possível criar o item do plano de ação: ' + e.message);
+      throw e;
+    }
+  }
+
+  async function handleUpdateActionItem(id, fields) {
+    try {
+      await updateActionItem(id, fields);
+      await loadData();
+    } catch (e) {
+      setError('Não foi possível atualizar o item do plano de ação: ' + e.message);
+    }
+  }
+
+  async function handleDeleteActionItem(id) {
+    try {
+      await deleteActionItem(id);
+      await loadData();
+    } catch (e) {
+      setError('Não foi possível excluir o item do plano de ação: ' + e.message);
+    }
+  }
+
   const hasData = txns.length > 0;
   const catColors = useMemo(() => catColorMap(categories), [categories]);
 
@@ -391,6 +427,18 @@ export default function Home() {
 
     if (activeSection === 'income') {
       return <PayslipImportPanel income={income} onSave={handleSaveIncome} onDelete={handleDeleteIncome} />;
+    }
+
+    if (activeSection === 'action_plan') {
+      return (
+        <ActionPlan
+          items={actionItems}
+          categories={categories}
+          onCreate={handleCreateActionItem}
+          onUpdate={handleUpdateActionItem}
+          onDelete={handleDeleteActionItem}
+        />
+      );
     }
 
     if (activeSection === 'categories') {
@@ -462,6 +510,7 @@ export default function Home() {
           categories={categories}
           expenseVsIncome={expenseVsIncome}
           incomeCommitment={incomeCommitment}
+          onAddToPlan={handleCreateActionItem}
         />
       );
     }
@@ -519,7 +568,7 @@ export default function Home() {
           onFilterBankChange={setFilterBank}
           filterAccountType={filterAccountType}
           onFilterAccountTypeChange={setFilterAccountType}
-          showFilters={!['admin_users', 'my_account', 'categories', 'import', 'income'].includes(activeSection)}
+          showFilters={!['admin_users', 'my_account', 'categories', 'import', 'income', 'action_plan'].includes(activeSection)}
           userName={session?.user?.name}
           onProfileClick={() => setActiveSection('my_account')}
         />

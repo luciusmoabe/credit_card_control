@@ -4,6 +4,7 @@ import 'chart.js/auto';
 import { useRef, useState } from 'react';
 import { Doughnut } from 'react-chartjs-2';
 import ParecerDoc from './ParecerDoc';
+import { showToast } from '@/components/Toast';
 import {
   buildDiagnostics,
   buildBudgetDiagnostics,
@@ -13,15 +14,18 @@ import {
   buildRecommendationsHtml,
   buildAiPayload,
   FALLBACK_CATEGORY_COLOR,
+  fmt,
 } from '@/lib/finance';
 
 // Renders its own (visually hidden) donut chart instead of reusing the one on
 // the Visão Geral section — that panel may not be mounted when the parecer
 // is generated, since sections unmount when you navigate away from them.
-export default function ParecerPanel({ analysis, budgets, catColors, categories, expenseVsIncome, incomeCommitment }) {
+export default function ParecerPanel({ analysis, budgets, catColors, categories, expenseVsIncome, incomeCommitment, onAddToPlan }) {
   const [doc, setDoc] = useState(null);
   const [status, setStatus] = useState('');
   const [generating, setGenerating] = useState(false);
+  const [addedKeys, setAddedKeys] = useState(new Set());
+  const [addingAll, setAddingAll] = useState(false);
   const snapshotChartRef = useRef(null);
 
   async function handleGerar() {
@@ -31,6 +35,7 @@ export default function ParecerPanel({ analysis, budgets, catColors, categories,
     }
 
     setGenerating(true);
+    setAddedKeys(new Set());
     const diagnostics = buildDiagnostics(analysis)
       .concat(buildBudgetDiagnostics(analysis.catEntries, budgets, analysis.nMonths))
       .concat(buildIncomeDiagnostics(expenseVsIncome, incomeCommitment));
@@ -67,6 +72,49 @@ export default function ParecerPanel({ analysis, budgets, catColors, categories,
     }
   }
 
+  function cutItem(c) {
+    return { title: `Reduzir gasto em ${c.cat}`, category: c.cat, target_amount: c.cut };
+  }
+
+  function diagItem(d) {
+    return { title: d.topic || d.tag, category: null, target_amount: null };
+  }
+
+  async function handleAddToPlan(item, key, silent) {
+    try {
+      await onAddToPlan(item);
+      setAddedKeys((prev) => new Set(prev).add(key));
+      if (!silent) showToast('Adicionado ao plano de ação', 'success');
+      return true;
+    } catch (e) {
+      showToast(e.message || 'Erro ao adicionar ao plano de ação', 'error');
+      return false;
+    }
+  }
+
+  function pendingSuggestions() {
+    const cuts = (doc?.investmentPlan?.cuts || [])
+      .filter((c) => !addedKeys.has(`cut:${c.cat}`))
+      .map((c) => ({ item: cutItem(c), key: `cut:${c.cat}` }));
+    const diags = (doc?.diagnostics || [])
+      .map((d, i) => ({ d, i }))
+      .filter(({ d, i }) => d.sev === 'warn' && !addedKeys.has(`diag:${i}`))
+      .map(({ d, i }) => ({ item: diagItem(d), key: `diag:${i}` }));
+    return [...cuts, ...diags];
+  }
+
+  async function handleAddAllToPlan() {
+    const pending = pendingSuggestions();
+    if (!pending.length) return;
+    setAddingAll(true);
+    let added = 0;
+    for (const { item, key } of pending) {
+      if (await handleAddToPlan(item, key, true)) added++;
+    }
+    setAddingAll(false);
+    if (added) showToast(`${added} sugestão(ões) adicionada(s) ao plano de ação`, 'success');
+  }
+
   function handleExport() {
     const nome = 'parecer_financeiro_' + (analysis.selPeriod === '__all__' ? 'geral' : analysis.selPeriod);
     const oldTitle = document.title;
@@ -96,6 +144,23 @@ export default function ParecerPanel({ analysis, budgets, catColors, categories,
         )}
       </div>
       {status && <div className="hint">{status}</div>}
+      {doc && onAddToPlan && pendingSuggestions().length > 0 && (
+        <div style={{ borderLeft: '3px solid var(--teal)', background: 'var(--teal-bg)', borderRadius: 8, padding: '12px 14px', marginTop: 10 }}>
+          <span className="tag">Plano de ação</span>
+          <div style={{ marginTop: 6 }}>
+            O parecer encontrou {pendingSuggestions().length} sugestão(ões) de ação
+            {doc.investmentPlan?.cuts?.length > 0 && (
+              <> — cortes de categoria que juntos liberam <strong>{fmt(doc.investmentPlan.cuts.reduce((s, c) => s + c.cut, 0))}/mês</strong> para investir</>
+            )}
+            .
+            <div className="row" style={{ marginTop: 8 }}>
+              <button type="button" className="ghost" onClick={handleAddAllToPlan} disabled={addingAll}>
+                {addingAll ? 'Adicionando...' : 'Adicionar todas as sugestões ao plano de ação'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
       {analysis.catEntries.length > 0 && (
         <div className="chart-snapshot-source" style={{ position: 'absolute', left: -9999, top: 0, width: 500, height: 500 }} aria-hidden="true">
           <Doughnut
@@ -130,6 +195,9 @@ export default function ParecerPanel({ analysis, budgets, catColors, categories,
           expenseVsIncome={doc.expenseVsIncome}
           incomeCommitment={doc.incomeCommitment}
           investmentPlan={doc.investmentPlan}
+          onAddCutToPlan={onAddToPlan ? (c) => handleAddToPlan(cutItem(c), `cut:${c.cat}`, false) : undefined}
+          onAddDiagnosticToPlan={onAddToPlan ? (d, i) => handleAddToPlan(diagItem(d), `diag:${i}`, false) : undefined}
+          addedKeys={addedKeys}
         />
       )}
     </div>

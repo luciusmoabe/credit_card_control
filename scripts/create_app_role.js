@@ -26,7 +26,7 @@ if (fs.existsSync(envPath)) {
   });
 }
 
-const TABLES = ['transactions', 'categories', 'category_budgets', 'category_overrides', 'income', 'period_meta', 'users'];
+const TABLES = ['transactions', 'categories', 'category_budgets', 'category_overrides', 'income', 'period_meta', 'users', 'action_items'];
 
 async function main() {
   if (!process.env.DATABASE_URL) {

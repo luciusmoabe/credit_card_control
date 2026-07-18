@@ -1,6 +1,6 @@
 import { fmt, fmtPct, FALLBACK_CATEGORY_COLOR, buildHealthBadge } from '@/lib/finance';
 
-export default function ParecerDoc({ a, diagnostics, recsHtml, aiGenerated, chartImage, catColors, expenseVsIncome, incomeCommitment, investmentPlan }) {
+export default function ParecerDoc({ a, diagnostics, recsHtml, aiGenerated, chartImage, catColors, expenseVsIncome, incomeCommitment, investmentPlan, onAddCutToPlan, onAddDiagnosticToPlan, addedKeys }) {
   const now = new Date();
   const dataEmissao = now.toLocaleDateString('pt-BR') + ' às ' + now.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
   const escopo =
@@ -72,6 +72,12 @@ export default function ParecerDoc({ a, diagnostics, recsHtml, aiGenerated, char
         </div>
         {expenseVsIncome?.source === 'estimate' && (
           <p className="hint" style={{ marginTop: 8 }}>* renda estimada a partir de créditos detectados no extrato — importe o contracheque do mês para um valor exato.</p>
+        )}
+        {!expenseVsIncome && (
+          <p className="hint" style={{ marginTop: 8 }}>
+            Nenhuma renda encontrada para este período — importe o contracheque na seção &quot;Renda&quot; do menu para
+            habilitar os indicadores de renda e o plano de redistribuição para investir mais.
+          </p>
         )}
       </div>
 
@@ -153,6 +159,7 @@ export default function ParecerDoc({ a, diagnostics, recsHtml, aiGenerated, char
                       <th style={{ textAlign: 'right' }}>Gasto atual/mês</th>
                       <th style={{ textAlign: 'right' }}>Corte sugerido</th>
                       <th style={{ textAlign: 'right' }}>Novo teto/mês</th>
+                      {onAddCutToPlan && <th></th>}
                     </tr>
                   </thead>
                   <tbody>
@@ -167,6 +174,18 @@ export default function ParecerDoc({ a, diagnostics, recsHtml, aiGenerated, char
                         <td className="mono" style={{ textAlign: 'right' }}>{fmt(c.monthly)}</td>
                         <td className="mono" style={{ textAlign: 'right' }}>-{fmt(c.cut)}</td>
                         <td className="mono" style={{ textAlign: 'right' }}>{fmt(c.newMonthly)}</td>
+                        {onAddCutToPlan && (
+                          <td>
+                            <button
+                              type="button"
+                              className="ghost"
+                              disabled={addedKeys?.has(`cut:${c.cat}`)}
+                              onClick={() => onAddCutToPlan(c)}
+                            >
+                              {addedKeys?.has(`cut:${c.cat}`) ? '✓ Adicionado' : 'Adicionar ao plano'}
+                            </button>
+                          </td>
+                        )}
                       </tr>
                     ))}
                   </tbody>
@@ -239,6 +258,17 @@ export default function ParecerDoc({ a, diagnostics, recsHtml, aiGenerated, char
           <div className={`insight ${d.sev}`} key={i}>
             <span className="tag">{d.tag}</span>
             <div dangerouslySetInnerHTML={{ __html: d.html }} />
+            {onAddDiagnosticToPlan && d.sev === 'warn' && (
+              <button
+                type="button"
+                className="ghost"
+                style={{ flex: 'none' }}
+                disabled={addedKeys?.has(`diag:${i}`)}
+                onClick={() => onAddDiagnosticToPlan(d, i)}
+              >
+                {addedKeys?.has(`diag:${i}`) ? '✓ Adicionado' : 'Adicionar ao plano'}
+              </button>
+            )}
           </div>
         ))}
       </div>

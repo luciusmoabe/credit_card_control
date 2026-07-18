@@ -54,6 +54,21 @@ async function main() {
     `;
     console.log('Table income created or already exists.');
 
+    await sql`
+      CREATE TABLE IF NOT EXISTS action_items (
+        id SERIAL PRIMARY KEY,
+        user_id TEXT NOT NULL,
+        title TEXT NOT NULL,
+        category TEXT,
+        target_amount NUMERIC(12,2),
+        due_date DATE,
+        status TEXT NOT NULL DEFAULT 'pending',
+        created_at TIMESTAMPTZ DEFAULT now(),
+        completed_at TIMESTAMPTZ
+      );
+    `;
+    console.log('Table action_items created or already exists.');
+
     // Row-Level Security como camada extra de defesa: mesmo que uma rota
     // futura esqueça o WHERE user_id = ..., a política do banco barra o
     // vazamento (consulta sem set_config('app.current_user_id', ...) na
@@ -65,7 +80,7 @@ async function main() {
       DECLARE
         tbl TEXT;
       BEGIN
-        FOREACH tbl IN ARRAY ARRAY['transactions','categories','category_budgets','category_overrides','income','period_meta']
+        FOREACH tbl IN ARRAY ARRAY['transactions','categories','category_budgets','category_overrides','income','period_meta','action_items']
         LOOP
           EXECUTE format('ALTER TABLE %I ENABLE ROW LEVEL SECURITY', tbl);
           EXECUTE format('ALTER TABLE %I FORCE ROW LEVEL SECURITY', tbl);
@@ -77,7 +92,7 @@ async function main() {
         END LOOP;
       END $$;
     `;
-    console.log('Row-Level Security habilitada em transactions/categories/category_budgets/category_overrides/income/period_meta.');
+    console.log('Row-Level Security habilitada em transactions/categories/category_budgets/category_overrides/income/period_meta/action_items.');
 
     console.log('Migration successful.');
   } catch (err) {
