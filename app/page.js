@@ -15,6 +15,7 @@ import ProjectionPanel from '@/components/ProjectionPanel';
 import ParecerPanel from '@/components/ParecerPanel';
 import CategoryManager from '@/components/CategoryManager';
 import DangerZone from '@/components/DangerZone';
+import BackupPanel from '@/components/BackupPanel';
 import BudgetProgress from '@/components/BudgetProgress';
 import AdminUsers from '@/components/AdminUsers';
 import ChangePassword from '@/components/ChangePassword';
@@ -522,7 +523,8 @@ export default function Home() {
     if (activeSection === 'my_account') {
       return (
         <>
-          <DangerZone 
+          <BackupPanel />
+          <DangerZone
             txns={txns} 
             periods={periods}
             banks={banks}
