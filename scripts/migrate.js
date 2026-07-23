@@ -69,6 +69,12 @@ async function main() {
     `;
     console.log('Table action_items created or already exists.');
 
+    await sql`
+      ALTER TABLE action_items
+      ADD COLUMN IF NOT EXISTS description TEXT;
+    `;
+    console.log('Column description added to action_items.');
+
     // Row-Level Security como camada extra de defesa: mesmo que uma rota
     // futura esqueça o WHERE user_id = ..., a política do banco barra o
     // vazamento (consulta sem set_config('app.current_user_id', ...) na

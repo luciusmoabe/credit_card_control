@@ -13,6 +13,7 @@ export async function PATCH(request, { params }) {
 
   if (
     body.title === undefined &&
+    body.description === undefined &&
     body.category === undefined &&
     body.target_amount === undefined &&
     body.due_date === undefined &&
@@ -27,6 +28,7 @@ export async function PATCH(request, { params }) {
     UPDATE action_items
     SET
       title = COALESCE(${body.title ?? null}, title),
+      description = COALESCE(${body.description ?? null}, description),
       category = COALESCE(${body.category ?? null}, category),
       target_amount = COALESCE(${body.target_amount ?? null}, target_amount),
       due_date = COALESCE(${body.due_date ?? null}, due_date),
@@ -37,7 +39,7 @@ export async function PATCH(request, { params }) {
         ELSE completed_at
       END
     WHERE id = ${id}::int AND user_id = ${userId}
-    RETURNING id, user_id, title, category, target_amount, due_date, status, created_at, completed_at
+    RETURNING id, user_id, title, description, category, target_amount, due_date, status, created_at, completed_at
   `;
 
   if (!row) {

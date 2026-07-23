@@ -21,6 +21,7 @@ export default function ActionPlan({ items, categories, onCreate, onUpdate, onDe
   const [isAdding, setIsAdding] = useState(false);
   const [editingId, setEditingId] = useState(null);
   const [title, setTitle] = useState('');
+  const [description, setDescription] = useState('');
   const [category, setCategory] = useState('');
   const [targetAmount, setTargetAmount] = useState('');
   const [dueDate, setDueDate] = useState('');
@@ -35,6 +36,7 @@ export default function ActionPlan({ items, categories, onCreate, onUpdate, onDe
 
   function resetForm() {
     setTitle('');
+    setDescription('');
     setCategory('');
     setTargetAmount('');
     setDueDate('');
@@ -48,6 +50,7 @@ export default function ActionPlan({ items, categories, onCreate, onUpdate, onDe
 
   function openEdit(item) {
     setTitle(item.title || '');
+    setDescription(item.description || '');
     setCategory(item.category || '');
     setTargetAmount(item.target_amount !== null && item.target_amount !== undefined ? String(item.target_amount) : '');
     setDueDate(item.due_date ? String(item.due_date).slice(0, 10) : '');
@@ -59,6 +62,7 @@ export default function ActionPlan({ items, categories, onCreate, onUpdate, onDe
     if (!trimmed) return;
     const payload = {
       title: trimmed,
+      description: description.trim() || null,
       category: category || null,
       target_amount: targetAmount.trim() ? normalizeValue(targetAmount.trim()) : null,
       due_date: dueDate || null,
@@ -80,7 +84,12 @@ export default function ActionPlan({ items, categories, onCreate, onUpdate, onDe
     const isDone = item.status === 'done';
     return (
       <tr key={item.id}>
-        <td style={isDone ? { textDecoration: 'line-through', opacity: 0.6 } : undefined}>{item.title}</td>
+        <td style={isDone ? { opacity: 0.6 } : undefined}>
+          <div style={isDone ? { textDecoration: 'line-through' } : undefined}>{item.title}</div>
+          {item.description && (
+            <div className="hint" style={{ marginTop: 4, whiteSpace: 'pre-wrap' }}>{item.description}</div>
+          )}
+        </td>
         <td>
           {item.category ? (
             <div className="cat-name"><span className="cat-swatch" style={{ background: color }} />{item.category}</div>
@@ -175,6 +184,15 @@ export default function ActionPlan({ items, categories, onCreate, onUpdate, onDe
               value={title}
               onChange={(e) => setTitle(e.target.value)}
               autoFocus
+            />
+          </div>
+          <div className="field" style={{ gridColumn: '1 / -1' }}>
+            <label>Descrição</label>
+            <textarea
+              placeholder="O que precisa ser feito, com detalhes (opcional)"
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+              rows={3}
             />
           </div>
           <div className="field">

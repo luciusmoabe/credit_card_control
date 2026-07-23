@@ -73,11 +73,21 @@ export default function ParecerPanel({ analysis, budgets, catColors, categories,
   }
 
   function cutItem(c) {
-    return { title: `Reduzir gasto em ${c.cat}`, category: c.cat, target_amount: c.cut };
+    return {
+      title: `Reduzir gasto em ${c.cat}`,
+      description: `Reduza o gasto mensal com "${c.cat}" de ${fmt(c.monthly)} para até ${fmt(c.newMonthly)} — um corte de ${fmt(c.cut)}/mês. Direcione a diferença economizada para investimentos ou para a reserva de emergência.`,
+      category: c.cat,
+      target_amount: c.cut,
+    };
   }
 
   function diagItem(d) {
-    return { title: d.topic || d.tag, category: null, target_amount: null };
+    return {
+      title: d.topic || d.tag,
+      description: d.html ? d.html.replace(/<[^>]+>/g, '') : null,
+      category: null,
+      target_amount: null,
+    };
   }
 
   async function handleAddToPlan(item, key, silent) {

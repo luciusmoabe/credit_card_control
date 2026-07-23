@@ -10,7 +10,7 @@ export async function GET(request) {
   const sql = sqlAsUser(userId);
 
   const rows = await sql`
-    SELECT id, user_id, title, category, target_amount, due_date, status, created_at, completed_at
+    SELECT id, user_id, title, description, category, target_amount, due_date, status, created_at, completed_at
     FROM action_items
     WHERE user_id = ${userId}
     ORDER BY status, due_date NULLS LAST, created_at DESC
@@ -25,16 +25,16 @@ export async function POST(request) {
   const sql = sqlAsUser(userId);
   const body = await request.json();
   const title = (body.title || '').trim();
-  const { category, target_amount, due_date } = body;
+  const { category, target_amount, due_date, description } = body;
 
   if (!title) {
     return NextResponse.json({ error: 'title é obrigatório.' }, { status: 400 });
   }
 
   const [row] = await sql`
-    INSERT INTO action_items (user_id, title, category, target_amount, due_date)
-    VALUES (${userId}, ${title}, ${category || null}, ${target_amount ?? null}, ${due_date || null})
-    RETURNING id, user_id, title, category, target_amount, due_date, status, created_at, completed_at
+    INSERT INTO action_items (user_id, title, description, category, target_amount, due_date)
+    VALUES (${userId}, ${title}, ${description || null}, ${category || null}, ${target_amount ?? null}, ${due_date || null})
+    RETURNING id, user_id, title, description, category, target_amount, due_date, status, created_at, completed_at
   `;
   return NextResponse.json(row, { status: 201 });
 }
